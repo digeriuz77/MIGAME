@@ -291,14 +291,20 @@ def main():
 
     if "journey" not in st.session_state:
         st.session_state.journey = ChangeJourney()
+        # Add a starting message
+        starter = random.choice(conversation_starters)
+        ai_response = st.session_state.journey.current_character.generate_response(
+            starter, 50, "general", []
+        )
+        st.session_state.journey.conversation_history.append((starter, ai_response))
 
     journey = st.session_state.journey
 
     render_progress_bar(journey)
 
     for user_input, ai_response in journey.conversation_history:
-        st.text(f"User: {user_input}")
-        st.text(f"Coach: {ai_response}")
+        st.text(f"Coach: {user_input}")
+        st.text(f"You: {ai_response}")
 
     user_input = st.text_input("Your response:")
     if user_input:
@@ -311,6 +317,3 @@ def main():
     if st.button("Start Over"):
         st.session_state.journey = ChangeJourney()
         st.experimental_rerun()
-
-if __name__ == "__main__":
-    main()
