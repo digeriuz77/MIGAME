@@ -291,31 +291,64 @@ def main():
 
     if "journey" not in st.session_state:
         st.session_state.journey = ChangeJourney()
-        starter = random.choice(conversation_starters) if conversation_starters else "Welcome to your coaching session. How can I assist you today?"
-        ai_response = st.session_state.journey.current_character.generate_response(
-            starter, 50, st.session_state.journey.current_topic, []
-        )
-        st.session_state.journey.conversation_history.append((starter, ai_response))
+        starter = random.choice(conversation_starters)
+        st.session_state.journey.conversation_history.append(("Coach", starter))
 
     journey = st.session_state.journey
 
-    render_progress_bar(journey)
+    # Display current stage
+    st.subheader(f"Current Stage: {journey.get_current_stage()}")
 
-    for coach_input, user_response in journey.conversation_history:
-        st.text(f"Coach: {coach_input}")
-        st.text(f"You: {user_response}")
+    # Display resources
+    st.sidebar.subheader("Your Resources")
+    for resource, value in journey.resources.get_resources().items():
+        st.sidebar.progress(value / 100)
+        st.sidebar.text(f"{resource}: {value}")
 
+    # Display conversation history
+    for role, message in journey.conversation_history:
+        st.text(f"{role}: {message}")
+
+    # User input
     user_input = st.text_input("Your response:")
     if user_input:
+        # Analyze change talk
+        change_talk_score = journey.analyze_change_talk(user_input)
+        journey.change_score += change_talk_score
+
+        # Process interaction
         ai_response = journey.process_interaction(user_input)
-        if ai_response:
-            st.text(f"Coach: {ai_response}")
+        journey.conversation_history.append(("You", user_input))
+        journey.conversation_history.append(("Coach", ai_response))
 
-    render_resource_charts(journey)
+        # Check for random events
+        event = journey.events.check_for_events(journey)
+        if event:
+            st.warning(f"Event: {event}")
 
-    if st.button("Start Over"):
-        st.session_state.journey = ChangeJourney()
+        # Check for milestones
+        milestones = journey.milestones.check_for_milestones(journey)
+        for milestone in milestones:
+            st.success(f"Milestone achieved: {milestone}")
+
+        # Check for stage progress
+        if journey.check_stage_progress():
+            st.balloons()
+            st.success(f"Congratulations! You've progressed to the {journey.get_current_stage()} stage!")
+
         st.experimental_rerun()
+
+    # Milestone decision
+    if journey.check_for_milestone_decision():
+        st.info("You've reached a decision point!")
+        # Implement milestone decision UI here
+
+    # Game over check
+    if journey.is_complete():
+        st.success("Congratulations! You've completed your change journey!")
+        if st.button("Start New Journey"):
+            st.session_state.journey = ChangeJourney()
+            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
