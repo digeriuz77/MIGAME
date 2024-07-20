@@ -95,7 +95,7 @@ class AICharacter:
     def __init__(self, name, base_personality):
         self.name = name
         self.base_personality = base_personality
-        self.traits = character_traits[name.lower()]
+        self.traits = character_traits.get(name.lower(), ["supportive"])  # Default trait if not found
         self.mood = 0  # Range from -1 (negative) to 1 (positive)
 
     def generate_response(self, user_input, change_score, current_topic, conversation_history):
@@ -108,11 +108,13 @@ class AICharacter:
         else:
             current_personality = self.base_personality
         
-        relevant_trait = random.choice([trait for trait in self.traits if current_topic.lower() in trait.lower()])
+        relevant_trait = random.choice(self.traits)  # Simplified trait selection
         
         prompt = self._construct_prompt(user_input, current_personality, relevant_trait, current_topic, change_score, conversation_history)
         
         return get_ai_response(prompt)
+
+    # ... rest of the class remains the same
 
     def _construct_prompt(self, user_input, current_personality, relevant_trait, current_topic, change_score, conversation_history):
         prompt = f"You are a {current_personality} {self.name} using motivational interviewing techniques. "
