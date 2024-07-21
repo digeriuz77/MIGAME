@@ -106,28 +106,23 @@ def main_view():
     st.write(f"Your Goal: {game_state.specific_goal}")
 
     # Display conversation history and images
-    for i in range(0, len(st.session_state.conversation_history), 4):
-        # Opening Description or Scenario
-        st.write(st.session_state.conversation_history[i][1])
+    for i, (speaker, message) in enumerate(st.session_state.conversation_history):
+        if speaker == "AI":
+            if message.startswith("Outcome:"):
+                st.write(message.replace("Outcome:", "").strip())
+            else:
+                st.write(message)
+        else:
+            st.write(f"{character_select}: {message}")
 
-        # Display choices, their images, and outcomes
-        for j in range(3):
-            if i + j + 1 < len(st.session_state.conversation_history):
-                choice = st.session_state.conversation_history[i + j + 1]
-                st.write(f"Choice {j + 1}: {choice[1]}")
-                
-                if 'story_images' in st.session_state and i + j < len(st.session_state.story_images):
-                    _, image_b64 = st.session_state.story_images[i + j]
-                    st.image(f"data:image/png;base64,{image_b64}")
-                
-                if i + j + 2 < len(st.session_state.conversation_history):
-                    outcome = st.session_state.conversation_history[i + j + 2]
-                    if outcome[0] == "Outcome":
-                        st.write(outcome[1])
+        # Display image if available
+        if 'story_images' in st.session_state and i < len(st.session_state.story_images):
+            _, image_b64 = st.session_state.story_images[i]
+            st.image(f"data:image/png;base64,{image_b64}")
 
     # Choice selection and Make Choice button
     with st.form(key='choice_form'):
-        choices = [choice[1] for choice in st.session_state.current_choices]
+        choices = [choice.split(': ', 1)[-1].strip() for choice in st.session_state.current_choices]
         choice = st.radio("What will you do?", choices)
         submit_button = st.form_submit_button(label='Make Choice')
 
@@ -139,33 +134,36 @@ def main_view():
         game_state.increment_progress(change_score)
         st.session_state.game_state = game_state  # Update the session state
 
-        prompt = f"{character_select} chose: \"{choice}\" in response to the previous scenario. They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, with the specific goal of {game_state.specific_goal}. Generate a brief (50 words max) response describing the outcome of this choice. Then, provide a new scenario and 3 new choices based on this outcome. Format the response as follows: Outcome: [Your outcome here] New Scenario: [Your new scenario here] Choices: 1. [Choice 1] 2. [Choice 2] 3. [Choice 3] Keep the entire response under 250 words."
+        prompt = f"{character_select} chose: \"{choice}\" in response to the previous scenario. They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, with the specific goal of {game_state.specific_goal}. Generate a brief (50 words max) response describing the outcome of this choice. Then, provide a new scenario and 3 new choices based on this outcome, following the same format as before. Format the response as follows: Outcome: [Your outcome here] New Scenario: [Your new scenario here] Choices: 1. 2. 3. Keep the entire response under 250 words."
 
         response = chat_session.get_ai_response(prompt)
 
-        outcome, new_content = response.split("New Scenario:")
-        new_scenario, choices_text = new_content.split("Choices:")
-        new_choices = [choice.strip() for choice in choices_text.split("\n") if choice.strip()]
+        outcome, new_scenario = response.split("New Scenario:")
+        new_scenario, new_choices = new_scenario.split("Choices:")
 
-        # Append the chosen choice and its outcome
-        st.session_state.conversation_history.append(("Choice", choice))
-        st.session_state.conversation_history.append(("Outcome", outcome.replace("Outcome:", "").strip()))
-        
-        # Generate and append image for the choice
-        image_prompt = create_image_prompt(chat_session, f"{character_select} - {choice}", art_style)
-        if image_prompt:
-            full_prompt = f"{art_style} of {image_prompt}"
-            image_b64 = create_image(chat_session, full_prompt)
-            if image_b64:
-                if 'story_images' not in st.session_state:
-                    st.session_state.story_images = []
-                st.session_state.story_images.append((full_prompt, image_b64))
+        st.session_state.conversation_history.append(("You", choice))
+        st.session_state.conversation_history.append(("AI", f"Outcome: {outcome.strip()}"))
+        st.session_state.conversation_history.append(("AI", f"New Scenario: {new_scenario.strip()}"))
+        st.session_state.current_scenario = new_scenario.strip()
+        st.session_state.current_choices = [choice.strip() for choice in new_choices.split("\n") if choice.strip()]
 
-        # Append the new scenario
-        st.session_state.conversation_history.append(("Scenario", new_scenario.strip()))
-        
-        # Append the new choices
-        st.session_state.current_choices = [("Choice", choice) for choice in new_choices]
+        # Generate and display image
+        try:
+            with st.spinner("Generating image..."):
+                image_prompt = create_image_prompt(chat_session, character_select, art_style)
+                if image_prompt:
+                    full_prompt = f"{art_style} of {image_prompt}"
+                    image_b64 = create_image(chat_session, full_prompt)
+                    if image_b64:
+                        if 'story_images' not in st.session_state:
+                            st.session_state.story_images = []
+                        st.session_state.story_images.append((full_prompt, image_b64))
+                    else:
+                        st.warning("Unable to generate image for this scenario.")
+                else:
+                    st.warning("Unable to generate image prompt.")
+        except Exception as e:
+            st.error(f"An error occurred while generating the image: {str(e)}")
 
         st.rerun()  # Rerun the app to update the display
 
@@ -177,7 +175,7 @@ def main_view():
     st.write(f"Steps taken: {game_state.steps_taken}")
 
     # Add "Print My Story" button when progress reaches 100%
-    if progress >= 1.0:
+    if progress >= 0.1:
         if st.button("Print My Story"):
             print_story()
             
