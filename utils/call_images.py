@@ -32,23 +32,23 @@ def create_image(chat_session, prompt):
         return None
 
 GENERATE_IMAGE_DESCRIPTION_PROMPT = """
-Given the following section of a short children's story about {character_select} 
+Given the following section of a story about {character_select} 
 write a very brief single-line description summarizing the main plot element. 
 Focus on what the {character_select} is doing, describe the setting. 
 Include any specific objects mentioned in the chat to that point.
 The characters should be simply described, not named.
 This description will be used to generate a picture to accompany the text. 
-Each description should start with "A suitable for a young audience cartoon drawing of..."
+The description should be suitable for creating an image in the style of {art_style}.
 Story text begins now:
 """
 
-def create_image_prompt(chat_session, character_select: str):
+def create_image_prompt(chat_session, character_select: str, art_style: str):
     try:
         # Get the last few messages from the chat history
         story_ending = "\n\n".join(
             [msg["content"] for msg in chat_session.history[-3:] if msg["role"] != "system"]
         )
-        prompt = f"{GENERATE_IMAGE_DESCRIPTION_PROMPT.format(character_select=character_select)}\n\n{story_ending}"
+        prompt = f"{GENERATE_IMAGE_DESCRIPTION_PROMPT.format(character_select=character_select, art_style=art_style)}\n\n{story_ending}"
         
         # Use the existing ChatSession to get the AI response
         image_prompt = chat_session.get_ai_response(prompt)
