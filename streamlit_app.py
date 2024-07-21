@@ -101,14 +101,13 @@ prompt = f"{character_select} chose: \"{choice}\" in response to the previous sc
 
 response = chat_session.get_ai_response(prompt)
 
-        
-        outcome, new_scenario = response.split("New Scenario:")
-        new_scenario, new_choices = new_scenario.split("Choices:")
-        
-        st.session_state.conversation_history.append(("AI", outcome.strip()))
-        st.session_state.current_scenario = new_scenario.strip()
-        st.session_state.current_choices = [choice.strip().split(') ')[0] + ')' for choice in new_choices.split("\n") if choice.strip()]
-        st.session_state.conversation_history.append(("AI", st.session_state.current_scenario))
+outcome, new_scenario = response.split("New Scenario:")
+new_scenario, new_choices = new_scenario.split("Choices:")
+
+st.session_state.conversation_history.append(("AI", outcome.strip()))
+st.session_state.current_scenario = new_scenario.strip()
+st.session_state.current_choices = [choice.strip().split(') ')[0] + ')' for choice in new_choices.split("\n") if choice.strip()]
+st.session_state.conversation_history.append(("AI", st.session_state.current_scenario))
         
         # Generate and display image
         try:
