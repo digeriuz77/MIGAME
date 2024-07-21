@@ -92,15 +92,15 @@ def main_view():
 
     # Display conversation history and images
     for i, (speaker, message) in enumerate(st.session_state.conversation_history):
-    if speaker == "AI":
-        st.write(f"AI: {message}")
-        # Display image after the AI's scenario or outcome message
-        if 'story_images' in st.session_state and i // 2 < len(st.session_state.story_images):
-            image_prompt, image_b64 = st.session_state.story_images[i // 2]
-            st.image(f"data:image/png;base64,{image_b64}")
-            st.write(f"Image description: {image_prompt}")
-    else:
-        st.write(f"You: {message}")
+        if speaker == "AI":
+            st.write(f"AI: {message}")
+            # Display image after the AI's scenario or outcome message
+            if 'story_images' in st.session_state and i // 2 < len(st.session_state.story_images):
+                image_prompt, image_b64 = st.session_state.story_images[i // 2]
+                st.image(f"data:image/png;base64,{image_b64}")
+                st.write(f"Image description: {image_prompt}")
+        else:
+            st.write(f"You: {message}")
 
     # Choice selection and Make Choice button
     with st.form(key='choice_form'):
