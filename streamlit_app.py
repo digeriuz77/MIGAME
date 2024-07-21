@@ -31,6 +31,9 @@ def init_state():
     if "current_choices" not in st.session_state:
         st.session_state.current_choices = []
 
+    # Debug: Print the initialization of the game state
+    st.write("Initialized GameState:", st.session_state.game_state)
+
 def get_journey_prompt_view():
     st.title("Start Your Change Journey")
     
