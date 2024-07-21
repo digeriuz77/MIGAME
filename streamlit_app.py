@@ -22,6 +22,7 @@ def init_state():
         st.session_state.session_id = str(random.randint(1000, 9999))
     if "game_state" not in st.session_state:
         st.session_state.game_state = GameState()
+        st.write("Initialized GameState:", vars(st.session_state.game_state))
     if "chat_session" not in st.session_state:
         st.session_state.chat_session = ChatSession()
     if "current_scenario" not in st.session_state:
@@ -30,9 +31,6 @@ def init_state():
         st.session_state.conversation_history = []
     if "current_choices" not in st.session_state:
         st.session_state.current_choices = []
-
-    # Debug: Print the initialization of the game state
-    st.write("Initialized GameState:", st.session_state.game_state)
 
 def get_journey_prompt_view():
     st.title("Start Your Change Journey")
@@ -48,12 +46,17 @@ def get_journey_prompt_view():
     specific_goal = st.text_input("What specific goal do you have in mind for this area?")
 
     if st.button("Begin Journey"):
-        st.session_state.game_state.set_character(character_name, character_type)
-        st.session_state.game_state.set_focus_area(selected_area)
-        st.session_state.game_state.set_specific_goal(specific_goal)
-        st.session_state.journey_in_progress = True
-        generate_scenario()
-        st.rerun()
+        # Debug: Check if set_character method is available
+        st.write("Checking if 'set_character' method is available...")
+        if hasattr(st.session_state.game_state, 'set_character'):
+            st.session_state.game_state.set_character(character_name, character_type)
+            st.session_state.game_state.set_focus_area(selected_area)
+            st.session_state.game_state.set_specific_goal(specific_goal)
+            st.session_state.journey_in_progress = True
+            generate_scenario()
+            st.rerun()
+        else:
+            st.error("'set_character' method not found in GameState")
 
 def generate_scenario():
     game_state = st.session_state.game_state
