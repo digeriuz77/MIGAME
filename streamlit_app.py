@@ -105,20 +105,36 @@ def main_view():
     st.write(f"Current Stage: {game_state.get_current_stage()}")
     st.write(f"Your Goal: {game_state.specific_goal}")
 
-    # Display conversation history and images
-    for i, (speaker, message) in enumerate(st.session_state.conversation_history):
-        if speaker == "AI":
-            if message.startswith("Outcome:"):
-                st.write(message.replace("Outcome:", "").strip())
-            else:
-                st.write(message)
-        else:
-            st.write(f"{character_select}: {message}")
+    # Generate and add image if flag is set
+    if st.session_state.get('generate_image_next_turn', False):
+        try:
+            with st.spinner("Generating image..."):
+                image_prompt = create_image_prompt(chat_session, character_select, art_style)
+                if image_prompt:
+                    full_prompt = f"{art_style} of {image_prompt}"
+                    image_b64 = create_image(chat_session, full_prompt)
+                    if image_b64:
+                        st.session_state.conversation_history.append(("IMAGE", image_b64))
+                    else:
+                        st.warning("Unable to generate image for this scenario.")
+                else:
+                    st.warning("Unable to generate image prompt.")
+        except Exception as e:
+            st.error(f"An error occurred while generating the image: {str(e)}")
+        
+        # Reset the flag
+        st.session_state.generate_image_next_turn = False
 
-        # Display image if available
-        if 'story_images' in st.session_state and i < len(st.session_state.story_images):
-            _, image_b64 = st.session_state.story_images[i]
-            st.image(f"data:image/png;base64,{image_b64}")
+    # Display conversation history and images
+    for item_type, content in st.session_state.conversation_history:
+        if item_type == "SCENARIO":
+            st.write(content)
+        elif item_type == "CHOICE":
+            st.write(f"Choice: {content}")
+        elif item_type == "OUTCOME":
+            st.write(f"Outcome: {content}")
+        elif item_type == "IMAGE":
+            st.image(f"data:image/png;base64,{content}")
 
     # Choice selection and Make Choice button
     with st.form(key='choice_form'):
@@ -141,29 +157,18 @@ def main_view():
         outcome, new_scenario = response.split("New Scenario:")
         new_scenario, new_choices = new_scenario.split("Choices:")
 
-        st.session_state.conversation_history.append(("You", choice))
-        st.session_state.conversation_history.append(("AI", f"Outcome: {outcome.strip()}"))
-        st.session_state.conversation_history.append(("AI", f"New Scenario: {new_scenario.strip()}"))
-        st.session_state.current_scenario = new_scenario.strip()
-        st.session_state.current_choices = [choice.strip() for choice in new_choices.split("\n") if choice.strip()]
+        # Append choice and outcome to conversation history
+        st.session_state.conversation_history.append(("CHOICE", choice))
+        st.session_state.conversation_history.append(("OUTCOME", outcome.strip()))
 
-        # Generate and display image
-        try:
-            with st.spinner("Generating image..."):
-                image_prompt = create_image_prompt(chat_session, character_select, art_style)
-                if image_prompt:
-                    full_prompt = f"{art_style} of {image_prompt}"
-                    image_b64 = create_image(chat_session, full_prompt)
-                    if image_b64:
-                        if 'story_images' not in st.session_state:
-                            st.session_state.story_images = []
-                        st.session_state.story_images.append((full_prompt, image_b64))
-                    else:
-                        st.warning("Unable to generate image for this scenario.")
-                else:
-                    st.warning("Unable to generate image prompt.")
-        except Exception as e:
-            st.error(f"An error occurred while generating the image: {str(e)}")
+        # Set flag to generate image on next turn
+        st.session_state.generate_image_next_turn = True
+
+        # Append new scenario
+        st.session_state.conversation_history.append(("SCENARIO", new_scenario.strip()))
+
+        # Update current choices
+        st.session_state.current_choices = [choice.strip() for choice in new_choices.split("\n") if choice.strip()]
 
         st.rerun()  # Rerun the app to update the display
 
@@ -174,7 +179,7 @@ def main_view():
     st.write(f"Stage: {game_state.get_current_stage()}")
     st.write(f"Steps taken: {game_state.steps_taken}")
 
-    # Add "Print My Story" button when progress reaches 100%
+    # Add "Print My Story" button when progress reaches 10%
     if progress >= 0.1:
         if st.button("Print My Story"):
             print_story()
