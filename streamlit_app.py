@@ -119,14 +119,11 @@ def main_view():
         st.session_state.conversation_history.append(("AI", st.session_state.current_scenario))
 
 
-       
-
-        
-        # Generate and display image
-        try:
-            st.write("Attempting to generate image...")
-            image_prompt = create_image_prompt(st.session_state.chat_session, character_select)
-        if image_prompt:
+# Generate and display image
+try:
+    st.write("Attempting to generate image...")
+    image_prompt = create_image_prompt(st.session_state.chat_session, character_select)
+    if image_prompt:
         st.write(f"Image prompt: {image_prompt}")
         image_b64 = create_image(image_prompt)
         if image_b64:
