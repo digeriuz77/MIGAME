@@ -33,7 +33,7 @@ def get_journey_prompt_view():
     st.title("Start Your Change Journey")
     st.write("What area of your life would you like to focus on for change?")
     
-    areas_of_change = ["Health", "Relationships", "Career", "Personal Growth", "Habits"]
+    areas_of_change = ["Making Friends", "Relationships", "Jobs and Career", "Doing something different", "Trying to stop doing something"]
     selected_area = st.selectbox("Choose an area:", areas_of_change)
     
     specific_goal = st.text_input("What specific goal do you have in mind for this area?")
@@ -50,10 +50,10 @@ def generate_scenario():
     chat_session = st.session_state.chat_session
 
     prompt = f"""
-    Generate a scenario for someone in the {game_state.get_current_stage()} stage of change, 
+    Generate a friendly scenario for young adults in the {game_state.get_current_stage()} stage of change, 
     focusing on {game_state.focus_area} with the specific goal of {game_state.specific_goal}. 
-    The scenario should present a situation where the person is facing a decision related to their change process. 
-    Also, provide 3 possible choices for the user, tailored to their current stage of change.
+    The scenario should present a situation where a creature is facing a decision related to the change process. It should be easy to read with simple language. Avoid unethical situations.
+    Also, provide 3 possible choices for the user, tailored to their current stage of change which will encourage either: taking responsibility, asking for help, or an aspect of avoidance - (like procrastination, unnecessary resting etc)
     Format the response as follows:
     Scenario: [Your scenario here]
     Choices:
@@ -107,8 +107,8 @@ def main_view():
         The user chose: "{choice}" in response to the previous scenario. 
         They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, 
         with the specific goal of {game_state.specific_goal}.
-        Generate a brief (50 words max) response describing the outcome of this choice.
-        Then, provide a new scenario and 3 new choices based on this outcome.
+        Generate a brief and simple (50 words max) response describing the outcome of this choice.
+        Remembering this choice, then provide a new scenario and 3 new choices based on this outcome. Remember each choice should advocate taking responsibility, asking for help or avoidance in some respect.
         Format the response as follows:
         Outcome: [Your outcome here]
         New Scenario: [Your new scenario here]
