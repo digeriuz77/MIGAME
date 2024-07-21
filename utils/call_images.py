@@ -12,14 +12,13 @@ def get_openai_client():
     
     return OpenAI(api_key=st.secrets["openai_api_key"])
 
-def create_image(prompt):
+def create_image(chat_session, prompt):
     if not prompt:
         logging.error("Image prompt is None or empty")
         return None
     try:
-        client = get_openai_client()
         logging.info(f"Attempting to create image with prompt: {prompt}")
-        response = client.images.generate(
+        response = chat_session.client.images.generate(
             model="dall-e-3",
             prompt=prompt,
             n=1,
