@@ -121,10 +121,10 @@ def main_view():
         # Generate and display image
         try:
             st.write("Attempting to generate image...")
-            image_prompt = create_image_prompt(chat_session, character_select)
+            image_prompt = create_image_prompt(st.session_state.chat_session, character_select)
             if image_prompt:
                 st.write(f"Image prompt: {image_prompt}")
-                image_b64 = create_image(image_prompt)
+                image_b64 = create_image(st.session_state.chat_session, image_prompt)
                 if image_b64:
                     st.image(f"data:image/png;base64,{image_b64}")
                 else:
