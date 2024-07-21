@@ -70,17 +70,31 @@ def generate_scenario():
     st.session_state.conversation_history.append(("AI", st.session_state.current_scenario))
 
 def main_view():
+    if 'game_state' not in st.session_state:
+        st.error("Game state not initialized. Please reset your journey.")
+        return
+
     game_state = st.session_state.game_state
 
     st.title(f"Your Change Journey: {game_state.focus_area}")
     st.write(f"Current Stage: {game_state.get_current_stage()}")
-    st.write(f"Your Goal: {game_state.specific_goal}")
+    
+    try:
+        st.write(f"Your Goal: {game_state.specific_goal}")
+    except AttributeError:
+        st.error("Specific goal not set. Please reset your journey and set a goal.")
+        return
 
     for speaker, message in st.session_state.conversation_history:
         if speaker == "AI":
             st.write(f"AI: {message}")
         else:
             st.write(f"You: {message}")
+
+    if 'current_choices' not in st.session_state or not st.session_state.current_choices:
+        st.warning("No choices available. Generating new scenario...")
+        generate_scenario()
+        st.rerun()
 
     choice = st.radio("What will you do?", st.session_state.current_choices)
 
@@ -106,8 +120,13 @@ def main_view():
         """
         response = chat_session.get_ai_response(prompt)
         
-        outcome, new_scenario = response.split("New Scenario:")
-        new_scenario, new_choices = new_scenario.split("Choices:")
+        try:
+            outcome, new_scenario = response.split("New Scenario:")
+            new_scenario, new_choices = new_scenario.split("Choices:")
+        except ValueError:
+            st.error("Error parsing AI response. Generating new scenario...")
+            generate_scenario()
+            st.rerun()
         
         st.session_state.conversation_history.append(("AI", outcome.strip()))
         st.session_state.current_scenario = new_scenario.strip()
@@ -139,3 +158,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    
+
