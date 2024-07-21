@@ -76,7 +76,7 @@ def main_view():
         outcome = chat_session.get_ai_response(prompt)
         st.write(outcome)
         
-        if game_state.choices_made == 0:  # This means we've just advanced to a new stage
+        if game_state.choices_made == 0:  # This means we've just advanced to a new stage or reset choices
             generate_scenario()
         
         st.experimental_rerun()
