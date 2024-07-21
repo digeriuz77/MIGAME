@@ -174,8 +174,8 @@ def main_view():
     st.write(f"Stage: {game_state.get_current_stage()}")
     st.write(f"Steps taken: {game_state.steps_taken}")
 
-    # Add "Print My Story" button when progress reaches 100%
-    if progress >= 1.0:
+    # Add "Print My Story" button when progress reaches 50%
+    if progress >= 0.5:
         if st.button("Print My Story"):
             print_story()
             
