@@ -99,6 +99,12 @@ def main_view():
     choice = st.radio("What will you do?", st.session_state.current_choices)
 
     if st.button("Make Choice"):
+    change_scores = [-5, 0, 10]
+    choice_index = st.session_state.current_choices.index(choice)
+    change_score = change_scores[choice_index]
+    
+    game_state.increment_progress(change_score)
+    st.session_state.game_state = game_state  # Update the session state
         prompt = f"{character_select} chose: \"{choice}\" in response to the previous scenario. They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, with the specific goal of {game_state.specific_goal}. Generate a brief (50 words max) response describing the outcome of this choice. Then, provide a new scenario and 3 new choices based on this outcome, following the same format as before. Format the response as follows: Outcome: [Your outcome here] New Scenario: [Your new scenario here] Choices: 1. 2. 3. Keep the entire response under 250 words."
 
         response = chat_session.get_ai_response(prompt)
@@ -112,20 +118,21 @@ def main_view():
         st.session_state.conversation_history.append(("AI", st.session_state.current_scenario))
 
 
-    
-        # Generate and display image
-        try:
-            image_prompt = create_image_prompt(st.session_state.chat_session, character_select)
-            image_url = create_image(image_prompt)
-            if image_url:
-                st.image(image_url)
-            else:
-                st.warning("Unable to generate image for this scenario.")
-        except Exception as e:
-            st.error(f"An error occurred while generating the image: {str(e)}")
-        
-        st.rerun()
+# Generate and display image
+try:
+    st.write("Attempting to generate image...")
+    image_prompt = create_image_prompt(st.session_state.chat_session, character_select)
+    st.write(f"Image prompt: {image_prompt}")
+    image_url = create_image(image_prompt)
+    st.write(f"Image URL: {image_url}")
+    if image_url:
+        st.image(image_url)
+    else:
+        st.warning("Unable to generate image for this scenario.")
+except Exception as e:
+    st.error(f"An error occurred while generating the image: {str(e)}")
 
+    
     st.sidebar.title("Your Progress")
     st.sidebar.write(f"Stage: {game_state.get_current_stage()}")
     st.sidebar.write(f"Steps taken: {game_state.steps_taken}")
