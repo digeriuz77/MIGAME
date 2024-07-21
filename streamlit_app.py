@@ -10,6 +10,10 @@ SESSION_DIR = Path("sessions")
 SESSION_DIR.mkdir(parents=True, exist_ok=True)
 
 def init_state():
+    if "openai_api_key" not in st.secrets:
+        st.error("OpenAI API key not found. Please set it in your Streamlit secrets.")
+        st.stop()
+    
     if "journey_in_progress" not in st.session_state:
         st.session_state.journey_in_progress = False
     if "session_id" not in st.session_state:
