@@ -41,7 +41,12 @@ def generate_scenario():
     game_state = st.session_state.game_state
     chat_session = st.session_state.chat_session
 
-    prompt = f"Generate a scenario for someone in the {game_state.get_current_stage()} stage of change, focusing on {game_state.focus_area}."
+    prompt = f"""
+    Generate a scenario for someone in the {game_state.get_current_stage()} stage of change, 
+    focusing on {game_state.focus_area}. The scenario should present a situation where 
+    the person is facing a decision related to their change process. 
+    Keep the response under 100 words.
+    """
     response = chat_session.get_ai_response(prompt)
     
     st.session_state.current_scenario = response
@@ -59,12 +64,26 @@ def main_view():
 
     if st.button("Make Choice"):
         result = game_state.process_choice(choice)
-        st.session_state.current_scenario = result
-        generate_scenario()  # Generate a new scenario after each choice
+        st.write(result)
+        
+        chat_session = st.session_state.chat_session
+        prompt = f"""
+        The user chose to {choice.lower()} in response to the previous scenario. 
+        Generate a brief (50 words max) response describing the outcome of this choice,
+        considering they are in the {game_state.get_current_stage()} stage of change 
+        for {game_state.focus_area}.
+        """
+        outcome = chat_session.get_ai_response(prompt)
+        st.write(outcome)
+        
+        if game_state.choices_made == 0:  # This means we've just advanced to a new stage
+            generate_scenario()
+        
+        st.experimental_rerun()
 
     st.sidebar.title("Your Progress")
     for resource, value in game_state.resources.items():
-        st.sidebar.progress(value / 100, text=resource)
+        st.sidebar.progress(value / 100, text=f"{resource}: {value}")
 
 def main():
     init_state()
