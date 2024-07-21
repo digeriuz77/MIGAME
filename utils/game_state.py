@@ -1,72 +1,34 @@
-import random
-
 class GameState:
     def __init__(self):
         self.stages = ["Pre-contemplation", "Contemplation", "Preparation", "Action", "Maintenance"]
         self._current_stage = 0
         self.focus_area = ""
-        self.resources = {
-            "Motivation": 50,
-            "Confidence": 50,
-            "Knowledge": 50,
-            "Support": 50
-        }
-        self._choices_made = 0
+        self.specific_goal = ""
+        self.progress = 0
+        self.steps_taken = 0
 
     def set_focus_area(self, area):
         self.focus_area = area
 
-    @property
-    def current_stage(self):
-        return self._current_stage
-
-    @property
-    def choices_made(self):
-        return self._choices_made
+    def set_specific_goal(self, goal):
+        self.specific_goal = goal
 
     def get_current_stage(self):
         return self.stages[self._current_stage]
 
-    def get_current_choices(self):
-        choices = [
-            "Learn more about the benefits of change",
-            "Take a small step towards your goal",
-            "Seek support from others",
-            "Reflect on your progress"
-        ]
-        return choices
-
     def process_choice(self, choice):
-        self._choices_made += 1
-        
-        if choice == "Learn more about the benefits of change":
-            self.resources["Knowledge"] += random.randint(5, 15)
-            self.resources["Motivation"] += random.randint(0, 10)
-        elif choice == "Take a small step towards your goal":
-            self.resources["Confidence"] += random.randint(5, 15)
-            self.resources["Motivation"] += random.randint(0, 10)
-        elif choice == "Seek support from others":
-            self.resources["Support"] += random.randint(5, 15)
-            self.resources["Motivation"] += random.randint(0, 10)
-        elif choice == "Reflect on your progress":
-            self.resources["Motivation"] += random.randint(5, 15)
-            self.resources["Confidence"] += random.randint(0, 10)
-
-        for resource in self.resources:
-            self.resources[resource] = max(0, min(100, self.resources[resource]))
-
-        if self._choices_made >= 3:
-            self.check_stage_progress()
-            self._choices_made = 0
-
+        self.steps_taken += 1
         return f"You chose to {choice.lower()}."
 
-    def check_stage_progress(self):
-        if all(value > 70 for value in self.resources.values()):
+    def increment_progress(self):
+        self.progress += 5
+        if self.progress >= 100:
+            self.progress = 100
+        
+        # Check for stage advancement
+        if self.progress >= (self._current_stage + 1) * 20:
             self.advance_stage()
 
     def advance_stage(self):
         if self._current_stage < len(self.stages) - 1:
             self._current_stage += 1
-            return True
-        return False
