@@ -10,6 +10,14 @@ st.set_page_config("Motivational Interviewing Journey", layout="wide")
 SESSION_DIR = Path("sessions")
 SESSION_DIR.mkdir(parents=True, exist_ok=True)
 
+ART_STYLES = [
+    "Digital painting", "Watercolor", "Oil painting", "Pencil sketch", 
+    "Comic book art", "Pixel art", "3D render", "Storybook illustration", 
+    "Vector art", "Charcoal drawing", "Pastel drawing", "Collage", 
+    "Low poly", "Isometric 3D", "Claymation", "Anime", "Vintage Disney", 
+    "Studio Ghibli", "Pop Art", "Art Nouveau"
+]
+
 def init_state():
     if "openai_api_key" not in st.secrets:
         st.error("OpenAI API key not found. Please set it in your Streamlit secrets.")
@@ -29,12 +37,17 @@ def init_state():
         st.session_state.conversation_history = []
     if "current_choices" not in st.session_state:
         st.session_state.current_choices = []
+    if "art_style" not in st.session_state:
+        st.session_state.art_style = "Digital painting"
 
 def get_journey_prompt_view():
     st.title("Start Your Change Journey")
     
     character_name = st.text_input("Enter your character's name:")
-    character_type = st.selectbox("Choose your character type:", ["Rabbit", "Bear", "Eagle", "Salamander", "Octopus"])
+    character_type = st.text_input("What avatar would you like to have? (It works best if you pick a creature)")
+    
+    st.write("Choose an art style for your journey:")
+    art_style = st.selectbox("Art style:", ART_STYLES)
     
     st.write("What area of your life would you like to focus on for change?")
     
@@ -47,6 +60,7 @@ def get_journey_prompt_view():
         st.session_state.game_state.set_character(character_name, character_type)
         st.session_state.game_state.set_focus_area(selected_area)
         st.session_state.game_state.set_specific_goal(specific_goal)
+        st.session_state.art_style = art_style
         st.session_state.journey_in_progress = True
         generate_scenario()
         st.rerun()
@@ -85,6 +99,7 @@ def main_view():
     game_state = st.session_state.game_state
     chat_session = st.session_state.chat_session
     character_select = f"{game_state.character_name} the {game_state.character_type}"
+    art_style = st.session_state.art_style
 
     st.title(f"{character_select}'s Change Journey: {game_state.focus_area}")
     st.write(f"Current Stage: {game_state.get_current_stage()}")
@@ -93,14 +108,14 @@ def main_view():
     # Display conversation history and images
     for i, (speaker, message) in enumerate(st.session_state.conversation_history):
         if speaker == "AI":
-            st.write(f"AI: {message}")
-            # Display image after the AI's scenario or outcome message
-            if 'story_images' in st.session_state and i // 2 < len(st.session_state.story_images):
-                image_prompt, image_b64 = st.session_state.story_images[i // 2]
-                st.image(f"data:image/png;base64,{image_b64}")
-                st.write(f"Image description: {image_prompt}")
+            st.write(message)
         else:
-            st.write(f"You: {message}")
+            st.write(f"{character_select}: {message}")
+        
+        # Display image if available
+        if 'story_images' in st.session_state and i < len(st.session_state.story_images):
+            _, image_b64 = st.session_state.story_images[i]
+            st.image(f"data:image/png;base64,{image_b64}")
 
     # Choice selection and Make Choice button
     with st.form(key='choice_form'):
@@ -131,13 +146,14 @@ def main_view():
         # Generate and display image
         try:
             with st.spinner("Generating image..."):
-                image_prompt = create_image_prompt(chat_session, character_select)
+                image_prompt = create_image_prompt(chat_session, character_select, art_style)
                 if image_prompt:
-                    image_b64 = create_image(chat_session, image_prompt)
+                    full_prompt = f"{art_style} of {image_prompt}"
+                    image_b64 = create_image(chat_session, full_prompt)
                     if image_b64:
                         if 'story_images' not in st.session_state:
                             st.session_state.story_images = []
-                        st.session_state.story_images.append((image_prompt, image_b64))
+                        st.session_state.story_images.append((full_prompt, image_b64))
                     else:
                         st.warning("Unable to generate image for this scenario.")
                 else:
@@ -157,7 +173,7 @@ def main_view():
     if progress >= 1.0:
         if st.button("Print My Story"):
             print_story()
-  
+
 def main():
     init_state()
 
@@ -171,5 +187,6 @@ def main():
             del st.session_state[key]
         init_state()
         st.rerun()
+
 if __name__ == "__main__":
     main()
