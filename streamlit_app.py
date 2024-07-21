@@ -47,7 +47,7 @@ def get_journey_prompt_view():
     character_type = st.text_input("What avatar would you like to have? (It works best if you pick a creature)")
     
     st.write("Choose an art style for your journey:")
-    art_style = st.selectbox("Art style:", random.sample(ART_STYLES, 5))
+    art_style = st.selectbox("Art style:", ART_STYLES)
     
     st.write("What area of your life would you like to focus on for change?")
     
