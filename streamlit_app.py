@@ -152,3 +152,5 @@ def main():
             del st.session_state[key]
         init_state()
         st.rerun()
+if __name__ == "__main__":
+    main()
