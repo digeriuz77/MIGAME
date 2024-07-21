@@ -3,7 +3,7 @@ import random
 class GameState:
     def __init__(self):
         self.stages = ["Pre-contemplation", "Contemplation", "Preparation", "Action", "Maintenance"]
-        self.current_stage = 0
+        self._current_stage = 0
         self.focus_area = ""
         self.resources = {
             "Motivation": 50,
@@ -11,13 +11,21 @@ class GameState:
             "Knowledge": 50,
             "Support": 50
         }
-        self.choices_made = 0
+        self._choices_made = 0
 
     def set_focus_area(self, area):
         self.focus_area = area
 
+    @property
+    def current_stage(self):
+        return self._current_stage
+
+    @property
+    def choices_made(self):
+        return self._choices_made
+
     def get_current_stage(self):
-        return self.stages[self.current_stage]
+        return self.stages[self._current_stage]
 
     def get_current_choices(self):
         choices = [
@@ -29,7 +37,7 @@ class GameState:
         return choices
 
     def process_choice(self, choice):
-        self.choices_made += 1
+        self._choices_made += 1
         
         if choice == "Learn more about the benefits of change":
             self.resources["Knowledge"] += random.randint(5, 15)
@@ -47,9 +55,9 @@ class GameState:
         for resource in self.resources:
             self.resources[resource] = max(0, min(100, self.resources[resource]))
 
-        if self.choices_made >= 3:
+        if self._choices_made >= 3:
             self.check_stage_progress()
-            self.choices_made = 0
+            self._choices_made = 0
 
         return f"You chose to {choice.lower()}."
 
@@ -58,7 +66,7 @@ class GameState:
             self.advance_stage()
 
     def advance_stage(self):
-        if self.current_stage < len(self.stages) - 1:
-            self.current_stage += 1
+        if self._current_stage < len(self.stages) - 1:
+            self._current_stage += 1
             return True
         return False
