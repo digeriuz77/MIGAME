@@ -97,17 +97,18 @@ def main_view():
 
     choice = st.radio("What will you do?", st.session_state.current_choices)
 
-prompt = f"{character_select} chose: \"{choice}\" in response to the previous scenario. They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, with the specific goal of {game_state.specific_goal}. Generate a brief (50 words max) response describing the outcome of this choice. Then, provide a new scenario and 3 new choices based on this outcome, following the same format as before. Format the response as follows: Outcome: [Your outcome here] New Scenario: [Your new scenario here] Choices: 1. 2. 3. Keep the entire response under 250 words."
+    if st.button("Make Choice"):
+        prompt = f"{character_select} chose: \"{choice}\" in response to the previous scenario. They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, with the specific goal of {game_state.specific_goal}. Generate a brief (50 words max) response describing the outcome of this choice. Then, provide a new scenario and 3 new choices based on this outcome, following the same format as before. Format the response as follows: Outcome: [Your outcome here] New Scenario: [Your new scenario here] Choices: 1. 2. 3. Keep the entire response under 250 words."
 
-response = chat_session.get_ai_response(prompt)
+        response = chat_session.get_ai_response(prompt)
 
-outcome, new_scenario = response.split("New Scenario:")
-new_scenario, new_choices = new_scenario.split("Choices:")
+        outcome, new_scenario = response.split("New Scenario:")
+        new_scenario, new_choices = new_scenario.split("Choices:")
 
-st.session_state.conversation_history.append(("AI", outcome.strip()))
-st.session_state.current_scenario = new_scenario.strip()
-st.session_state.current_choices = [choice.strip().split(') ')[0] + ')' for choice in new_choices.split("\n") if choice.strip()]
-st.session_state.conversation_history.append(("AI", st.session_state.current_scenario))
+        st.session_state.conversation_history.append(("AI", outcome.strip()))
+        st.session_state.current_scenario = new_scenario.strip()
+        st.session_state.current_choices = [choice.strip().split(') ')[0] + ')' for choice in new_choices.split("\n") if choice.strip()]
+        st.session_state.conversation_history.append(("AI", st.session_state.current_scenario))
         
         # Generate and display image
         try:
