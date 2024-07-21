@@ -114,7 +114,7 @@ def main_view():
                     full_prompt = f"{art_style} of {image_prompt}"
                     image_b64 = create_image(chat_session, full_prompt)
                     if image_b64:
-                        st.session_state.conversation_history.append(("IMAGE", image_b64, False))
+                        st.session_state.conversation_history.append(("IMAGE", image_b64))
                     else:
                         st.warning("Unable to generate image for this scenario.")
                 else:
@@ -126,20 +126,16 @@ def main_view():
         st.session_state.generate_image_next_turn = False
 
     # Display conversation history and images
-    for item in st.session_state.conversation_history:
-        if isinstance(item, tuple) and len(item) == 3:
-            item_type, content, show_label = item
-            if item_type == "SCENARIO":
-                st.write(content)
-            elif item_type == "CHOICE":
-                st.write(f"Choice: {content}" if show_label else content)
-            elif item_type == "OUTCOME":
-                st.write(f"Outcome: {content}" if show_label else content)
-            elif item_type == "IMAGE":
-                st.image(f"data:image/png;base64,{content}")
-        else:
-            st.write(item)  # Fallback for any items that don't match the expected format
-
+    for item_type, content in st.session_state.conversation_history:
+        if item_type == "SCENARIO":
+            st.write(content)
+        elif item_type == "CHOICE":
+            st.write(f"- {content}")
+        elif item_type == "OUTCOME":
+            st.write(f"_ {content}")
+        elif item_type == "IMAGE":
+            st.image(f"data:image/png;base64,{content}")
+            
     # Choice selection and Make Choice button
     with st.form(key='choice_form'):
         choices = [choice.split(': ', 1)[-1].strip() for choice in st.session_state.current_choices]
@@ -162,14 +158,14 @@ def main_view():
         new_scenario, new_choices = new_scenario.split("Choices:")
 
         # Append choice and outcome to conversation history
-        st.session_state.conversation_history.append(("CHOICE", choice, False))
-        st.session_state.conversation_history.append(("OUTCOME", outcome.strip(), False))
+        st.session_state.conversation_history.append(("CHOICE", choice))
+        st.session_state.conversation_history.append(("OUTCOME", outcome.strip()))
 
         # Set flag to generate image on next turn
         st.session_state.generate_image_next_turn = True
 
         # Append new scenario
-        st.session_state.conversation_history.append(("SCENARIO", new_scenario.strip(), False))
+        st.session_state.conversation_history.append(("SCENARIO", new_scenario.strip()))
 
         # Update current choices
         st.session_state.current_choices = [choice.strip() for choice in new_choices.split("\n") if choice.strip()]
