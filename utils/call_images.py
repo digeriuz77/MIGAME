@@ -43,18 +43,17 @@ Each description should start with "A suitable for a young audience cartoon draw
 Story text begins now:
 """
 
-def create_image_prompt(chat_history, character_select: str):
+def create_image_prompt(chat_session, character_select: str):
     try:
+        # Get the last few messages from the chat history
         story_ending = "\n\n".join(
-            [x.content for x in chat_history.messages if x.role != "system"][-3:]
+            [msg["content"] for msg in chat_session.history[-3:] if msg["role"] != "system"]
         )
         prompt = f"{GENERATE_IMAGE_DESCRIPTION_PROMPT.format(character_select=character_select)}\n\n{story_ending}"
-        client = get_openai_client()
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        image_prompt = response.choices[0].message.content
+        
+        # Use the existing ChatSession to get the AI response
+        image_prompt = chat_session.get_ai_response(prompt)
+        
         logging.info(f"Generated image prompt: {image_prompt}")
         return image_prompt
     except Exception as e:
