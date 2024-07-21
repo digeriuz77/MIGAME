@@ -2,13 +2,18 @@ import openai
 from .chat_session import ChatSession
 
 def create_image(prompt):
-    return openai.images.generate(
-        prompt=prompt,
-        n=1,
-        size="1024x1024",
-        response_format="b64_json",
-        model="dall-e-3",
-    ).model_dump()
+    try:
+        response = openai.Image.create(
+            prompt=prompt,
+            n=1,
+            size="1024x1024",
+            response_format="b64_json",
+            model="dall-e-3",
+        )
+        return response
+    except Exception as e:
+        print(f"Error creating image: {e}")
+        return None
 
 GENERATE_IMAGE_DESCRIPTION_PROMPT = """
 Given the following section of a short children's story about {character_select} 
@@ -23,10 +28,14 @@ Story text begins now:
 """
 
 def create_image_prompt(chat_history: ChatSession, character_select: str):
-    story_ending = "\n\n".join(
-        [x["content"] for x in chat_history.history if x["role"] != "system"][-3:]
-    )
-    prompt = f"{GENERATE_IMAGE_DESCRIPTION_PROMPT.format(character_select=character_select)}\n\n{story_ending}"
-    image_chat = ChatSession()
-    image_chat.user_says(prompt)
-    return image_chat.get_ai_response()
+    try:
+        story_ending = "\n\n".join(
+            [x["content"] for x in chat_history.history if x["role"] != "system"][-3:]
+        )
+        prompt = f"{GENERATE_IMAGE_DESCRIPTION_PROMPT.format(character_select=character_select)}\n\n{story_ending}"
+        image_chat = ChatSession()
+        image_chat.user_says(prompt)
+        return image_chat.get_ai_response()
+    except Exception as e:
+        print(f"Error creating image prompt: {e}")
+        return None
