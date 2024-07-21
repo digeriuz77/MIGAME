@@ -4,7 +4,6 @@ from pathlib import Path
 from utils.game_state import GameState
 from utils.chat_session import ChatSession
 from utils.call_images import create_image, create_image_prompt
-import base64
 
 st.set_page_config("Motivational Interviewing Journey", layout="wide")
 
@@ -22,7 +21,6 @@ def init_state():
         st.session_state.session_id = str(random.randint(1000, 9999))
     if "game_state" not in st.session_state:
         st.session_state.game_state = GameState()
-        st.write("Initialized GameState:", vars(st.session_state.game_state))
     if "chat_session" not in st.session_state:
         st.session_state.chat_session = ChatSession()
     if "current_scenario" not in st.session_state:
@@ -46,17 +44,12 @@ def get_journey_prompt_view():
     specific_goal = st.text_input("What specific goal do you have in mind for this area?")
 
     if st.button("Begin Journey"):
-        # Debug: Check if set_character method is available
-        st.write("Checking if 'set_character' method is available...")
-        if hasattr(st.session_state.game_state, 'set_character'):
-            st.session_state.game_state.set_character(character_name, character_type)
-            st.session_state.game_state.set_focus_area(selected_area)
-            st.session_state.game_state.set_specific_goal(specific_goal)
-            st.session_state.journey_in_progress = True
-            generate_scenario()
-            st.rerun()
-        else:
-            st.error("'set_character' method not found in GameState")
+        st.session_state.game_state.set_character(character_name, character_type)
+        st.session_state.game_state.set_focus_area(selected_area)
+        st.session_state.game_state.set_specific_goal(specific_goal)
+        st.session_state.journey_in_progress = True
+        generate_scenario()
+        st.rerun()
 
 def generate_scenario():
     game_state = st.session_state.game_state
@@ -140,9 +133,11 @@ def main_view():
         
         # Generate and display image
         image_prompt = create_image_prompt(chat_session, character_select)
-        image_data = create_image(image_prompt)
-        image_b64 = image_data["data"][0]["b64_json"]
-        st.image(f"data:image/png;base64,{image_b64}")
+        if image_prompt:
+            image_data = create_image(image_prompt)
+            if image_data:
+                image_b64 = image_data["data"][0]["b64_json"]
+                st.image(f"data:image/png;base64,{image_b64}")
         
         st.rerun()
 
