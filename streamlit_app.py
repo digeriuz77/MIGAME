@@ -1,31 +1,25 @@
 import streamlit as st
 import random
 from pathlib import Path
-from utils.helpers import init_state, reset_state, add_character_names
-from utils.chat_session import ChatSession
 from utils.game_state import GameState
-from utils.page_helpers import item_paginator, load_session, save_session
+from utils.chat_session import ChatSession
 
 st.set_page_config("Motivational Interviewing Journey", layout="wide")
 
 SESSION_DIR = Path("sessions")
 SESSION_DIR.mkdir(parents=True, exist_ok=True)
 
-def init_state(force=False):
-    if "journey_in_progress" not in st.session_state or force:
-        if not force:
-            load_session(SESSION_DIR)
-
-        if "journey_in_progress" not in st.session_state:
-            start_new_journey = True
-        else:
-            start_new_journey = False
-
-        if start_new_journey or force:
-            st.session_state.journey_in_progress = False
-            st.session_state.session_id = str(random.randint(1000, 9999))
-            st.session_state.game_state = GameState()
-            st.session_state.chat_session = ChatSession()
+def init_state():
+    if "journey_in_progress" not in st.session_state:
+        st.session_state.journey_in_progress = False
+    if "session_id" not in st.session_state:
+        st.session_state.session_id = str(random.randint(1000, 9999))
+    if "game_state" not in st.session_state:
+        st.session_state.game_state = GameState()
+    if "chat_session" not in st.session_state:
+        st.session_state.chat_session = ChatSession()
+    if "current_scenario" not in st.session_state:
+        st.session_state.current_scenario = ""
 
 def get_journey_prompt_view():
     st.title("Start Your Change Journey")
@@ -40,18 +34,16 @@ def get_journey_prompt_view():
         generate_scenario()
 
 def generate_scenario():
-    chat_session = st.session_state.chat_session
     game_state = st.session_state.game_state
+    chat_session = st.session_state.chat_session
 
     prompt = f"Generate a scenario for someone in the {game_state.get_current_stage()} stage of change, focusing on {game_state.focus_area}."
     response = chat_session.get_ai_response(prompt)
     
     st.session_state.current_scenario = response
-    st.experimental_rerun()
 
 def main_view():
     game_state = st.session_state.game_state
-    chat_session = st.session_state.chat_session
 
     st.title(f"Your Change Journey: {game_state.focus_area}")
     st.write(f"Current Stage: {game_state.get_current_stage()}")
@@ -64,8 +56,7 @@ def main_view():
     if st.button("Make Choice"):
         result = game_state.process_choice(choice)
         st.session_state.current_scenario = result
-        save_session(SESSION_DIR)
-        st.experimental_rerun()
+        generate_scenario()  # Generate a new scenario after each choice
 
     st.sidebar.title("Your Progress")
     for resource, value in game_state.resources.items():
@@ -80,8 +71,9 @@ def main():
         main_view()
 
     if st.button("Reset Journey"):
-        reset_state()
-        st.experimental_rerun()
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        init_state()
 
 if __name__ == "__main__":
     main()
