@@ -116,9 +116,9 @@ def main_view():
         Outcome: [Your outcome here]
         New Scenario: [Your new scenario here]
         Choices:
-        1. [Sustain talk choice] 
-        2. [Neutral choice] 
-        3. [Strong change talk choice]
+        1. 
+        2. 
+        3. 
         Keep the entire response under 250 words.
         """
         response = chat_session.get_ai_response(prompt)
@@ -133,11 +133,8 @@ def main_view():
         
         # Generate and display image
         image_prompt = create_image_prompt(chat_session, character_select)
-        if image_prompt:
-            image_data = create_image(image_prompt)
-            if image_data:
-                image_b64 = image_data["data"][0]["b64_json"]
-                st.image(f"data:image/png;base64,{image_b64}")
+        image_url = create_image(image_prompt)
+        st.image(image_url)
         
         st.rerun()
 
