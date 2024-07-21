@@ -114,7 +114,7 @@ def main_view():
                 st.write(message)
         else:
             st.write(f"{character_select}: {message}")
-        
+
         # Display image if available
         if 'story_images' in st.session_state and i < len(st.session_state.story_images):
             _, image_b64 = st.session_state.story_images[i]
@@ -142,8 +142,8 @@ def main_view():
         new_scenario, new_choices = new_scenario.split("Choices:")
 
         st.session_state.conversation_history.append(("You", choice))
-        st.session_state.conversation_history.append(("AI", outcome.strip()))
-        st.session_state.conversation_history.append(("AI", new_scenario.strip()))
+        st.session_state.conversation_history.append(("AI", f"Outcome: {outcome.strip()}"))
+        st.session_state.conversation_history.append(("AI", f"New Scenario: {new_scenario.strip()}"))
         st.session_state.current_scenario = new_scenario.strip()
         st.session_state.current_choices = [choice.strip() for choice in new_choices.split("\n") if choice.strip()]
 
@@ -178,7 +178,6 @@ def main_view():
     if progress >= 1.0:
         if st.button("Print My Story"):
             print_story()
-
 
 def main():
     init_state()
