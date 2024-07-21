@@ -30,11 +30,24 @@ def init_state():
     if "current_choices" not in st.session_state:
         st.session_state.current_choices = []
 
+import random
+
+ART_STYLES = [
+    "Digital painting", "Watercolor", "Oil painting", "Pencil sketch", 
+    "Comic book art", "Pixel art", "3D render", "Storybook illustration", 
+    "Vector art", "Charcoal drawing", "Pastel drawing", "Collage", 
+    "Low poly", "Isometric 3D", "Claymation", "Anime", "Vintage Disney", 
+    "Studio Ghibli", "Pop Art", "Art Nouveau"
+]
+
 def get_journey_prompt_view():
     st.title("Start Your Change Journey")
     
     character_name = st.text_input("Enter your character's name:")
-    character_type = st.selectbox("Choose your character type:", ["Rabbit", "Bear", "Eagle", "Salamander", "Octopus"])
+    character_type = st.text_input("What avatar would you like to have? (It works best if you pick a creature)")
+    
+    st.write("Choose an art style for your journey:")
+    art_style = st.selectbox("Art style:", random.sample(ART_STYLES, 5))
     
     st.write("What area of your life would you like to focus on for change?")
     
@@ -47,6 +60,7 @@ def get_journey_prompt_view():
         st.session_state.game_state.set_character(character_name, character_type)
         st.session_state.game_state.set_focus_area(selected_area)
         st.session_state.game_state.set_specific_goal(specific_goal)
+        st.session_state.art_style = art_style
         st.session_state.journey_in_progress = True
         generate_scenario()
         st.rerun()
@@ -54,8 +68,9 @@ def get_journey_prompt_view():
 def generate_scenario():
     game_state = st.session_state.game_state
     chat_session = st.session_state.chat_session
-
     character_select = f"{game_state.character_name} the {game_state.character_type}"
+    art_style = st.session_state.art_style
+
 
     prompt = f"""\
     Generate a young adult scenario for {character_select} who is in the {game_state.get_current_stage()} stage of change, 
@@ -73,6 +88,7 @@ def generate_scenario():
     2. [Neutral choice]
     3. [Strong change talk choice]
     Keep the entire response under 200 words.
+    The visual style for this scenario should be: {art_style}
     """
     response = chat_session.get_ai_response(prompt)
     
@@ -85,6 +101,7 @@ def main_view():
     game_state = st.session_state.game_state
     chat_session = st.session_state.chat_session
     character_select = f"{game_state.character_name} the {game_state.character_type}"
+    art_style = st.session_state.art_style
 
     st.title(f"{character_select}'s Change Journey: {game_state.focus_area}")
     st.write(f"Current Stage: {game_state.get_current_stage()}")
@@ -93,23 +110,26 @@ def main_view():
     # Display conversation history and images
     for i, (speaker, message) in enumerate(st.session_state.conversation_history):
         if speaker == "AI":
-            st.write(f"AI: {message}")
-            # Display image after the AI's scenario or outcome message
-            if 'story_images' in st.session_state and i // 2 < len(st.session_state.story_images):
-                image_prompt, image_b64 = st.session_state.story_images[i // 2]
-                st.image(f"data:image/png;base64,{image_b64}")
-                st.write(f"Image description: {image_prompt}")
+            if message.startswith("Outcome:"):
+                st.write(message.replace("Outcome:", "").strip())
+            else:
+                st.write(message)
         else:
-            st.write(f"You: {message}")
+            st.write(f"{character_select}: {message}")
+        
+        # Display image if available
+        if 'story_images' in st.session_state and i < len(st.session_state.story_images):
+            _, image_b64 = st.session_state.story_images[i]
+            st.image(f"data:image/png;base64,{image_b64}")
 
     # Choice selection and Make Choice button
     with st.form(key='choice_form'):
-        choice = st.radio("What will you do?", st.session_state.current_choices)
+        choice = st.radio("What will you do?", [c.split(': ', 1)[-1] for c in st.session_state.current_choices])
         submit_button = st.form_submit_button(label='Make Choice')
 
     if submit_button:
         change_scores = [-5, 0, 10]
-        choice_index = st.session_state.current_choices.index(choice)
+        choice_index = [c.split(': ', 1)[-1] for c in st.session_state.current_choices].index(choice)
         change_score = change_scores[choice_index]
         
         game_state.increment_progress(change_score)
@@ -131,17 +151,14 @@ def main_view():
         # Generate and display image
         try:
             with st.spinner("Generating image..."):
-                image_prompt = create_image_prompt(chat_session, character_select)
-                if image_prompt:
-                    image_b64 = create_image(chat_session, image_prompt)
-                    if image_b64:
-                        if 'story_images' not in st.session_state:
-                            st.session_state.story_images = []
-                        st.session_state.story_images.append((image_prompt, image_b64))
-                    else:
-                        st.warning("Unable to generate image for this scenario.")
+                image_prompt = f"{art_style} of {create_image_prompt(chat_session, character_select)}"
+                image_b64 = create_image(chat_session, image_prompt)
+                if image_b64:
+                    if 'story_images' not in st.session_state:
+                        st.session_state.story_images = []
+                    st.session_state.story_images.append((image_prompt, image_b64))
                 else:
-                    st.warning("Unable to generate image prompt.")
+                    st.warning("Unable to generate image for this scenario.")
         except Exception as e:
             st.error(f"An error occurred while generating the image: {str(e)}")
 
@@ -157,7 +174,7 @@ def main_view():
     if progress >= 1.0:
         if st.button("Print My Story"):
             print_story()
-  
+            
 def main():
     init_state()
 
