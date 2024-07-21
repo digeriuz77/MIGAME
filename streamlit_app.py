@@ -110,10 +110,12 @@ def main_view():
         st.session_state.current_scenario = new_scenario.strip()
         st.session_state.current_choices = [choice.strip().split(') ')[0] + ')' for choice in new_choices.split("\n") if choice.strip()]
         st.session_state.conversation_history.append(("AI", st.session_state.current_scenario))
-        
+
+
+    
         # Generate and display image
         try:
-            image_prompt = create_image_prompt(chat_session, character_select)
+            image_prompt = create_image_prompt(st.session_state.chat_session, character_select)
             image_url = create_image(image_prompt)
             if image_url:
                 st.image(image_url)
@@ -127,7 +129,7 @@ def main_view():
     st.sidebar.title("Your Progress")
     st.sidebar.write(f"Stage: {game_state.get_current_stage()}")
     st.sidebar.write(f"Steps taken: {game_state.steps_taken}")
-    st.sidebar.progress(game_state.progress / 100, text=f"Overall Progress: {game_state.progress}%")
+    st.sidebar.progress(value=game_state.progress / 100, text=f"Overall Progress: {game_state.progress}%")
 
 def main():
     init_state()
