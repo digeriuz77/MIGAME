@@ -83,7 +83,7 @@ def generate_scenario():
 
 def main_view():
     game_state = st.session_state.game_state
-    chat_session = st.session_state.chat_session  # Add this line
+    chat_session = st.session_state.chat_session
     character_select = f"{game_state.character_name} the {game_state.character_type}"
 
     st.title(f"{character_select}'s Change Journey: {game_state.focus_area}")
@@ -99,12 +99,13 @@ def main_view():
     choice = st.radio("What will you do?", st.session_state.current_choices)
 
     if st.button("Make Choice"):
-    change_scores = [-5, 0, 10]
-    choice_index = st.session_state.current_choices.index(choice)
-    change_score = change_scores[choice_index]
-    
-    game_state.increment_progress(change_score)
-    st.session_state.game_state = game_state  # Update the session state
+        change_scores = [-5, 0, 10]
+        choice_index = st.session_state.current_choices.index(choice)
+        change_score = change_scores[choice_index]
+        
+        game_state.increment_progress(change_score)
+        st.session_state.game_state = game_state  # Update the session state
+
         prompt = f"{character_select} chose: \"{choice}\" in response to the previous scenario. They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, with the specific goal of {game_state.specific_goal}. Generate a brief (50 words max) response describing the outcome of this choice. Then, provide a new scenario and 3 new choices based on this outcome, following the same format as before. Format the response as follows: Outcome: [Your outcome here] New Scenario: [Your new scenario here] Choices: 1. 2. 3. Keep the entire response under 250 words."
 
         response = chat_session.get_ai_response(prompt)
@@ -117,27 +118,25 @@ def main_view():
         st.session_state.current_choices = [choice.strip().split(') ')[0] + ')' for choice in new_choices.split("\n") if choice.strip()]
         st.session_state.conversation_history.append(("AI", st.session_state.current_scenario))
 
+        # Generate and display image
+        try:
+            st.write("Attempting to generate image...")
+            image_prompt = create_image_prompt(st.session_state.chat_session, character_select)
+            st.write(f"Image prompt: {image_prompt}")
+            image_response = create_image(image_prompt)
+            if image_response and 'data' in image_response:
+                image_b64 = image_response['data'][0]['b64_json']
+                st.image(f"data:image/png;base64,{image_b64}")
+            else:
+                st.warning("Unable to generate image for this scenario.")
+        except Exception as e:
+            st.error(f"An error occurred while generating the image: {str(e)}")
 
-# Generate and display image
-try:
-    st.write("Attempting to generate image...")
-    image_prompt = create_image_prompt(st.session_state.chat_session, character_select)
-    st.write(f"Image prompt: {image_prompt}")
-    image_url = create_image(image_prompt)
-    st.write(f"Image URL: {image_url}")
-    if image_url:
-        st.image(image_url)
-    else:
-        st.warning("Unable to generate image for this scenario.")
-except Exception as e:
-    st.error(f"An error occurred while generating the image: {str(e)}")
-
-    
     st.sidebar.title("Your Progress")
     st.sidebar.write(f"Stage: {game_state.get_current_stage()}")
     st.sidebar.write(f"Steps taken: {game_state.steps_taken}")
     st.sidebar.progress(value=game_state.progress / 100, text=f"Overall Progress: {game_state.progress}%")
-
+    
 def main():
     init_state()
 
