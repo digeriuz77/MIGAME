@@ -179,6 +179,7 @@ def main_view():
         if st.button("Print My Story"):
             print_story()
 
+
 def main():
     init_state()
 
