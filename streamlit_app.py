@@ -83,6 +83,7 @@ def generate_scenario():
 
 def main_view():
     game_state = st.session_state.game_state
+    chat_session = st.session_state.chat_session  # Add this line
     character_select = f"{game_state.character_name} the {game_state.character_type}"
 
     st.title(f"{character_select}'s Change Journey: {game_state.focus_area}")
