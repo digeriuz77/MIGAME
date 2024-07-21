@@ -34,11 +34,11 @@ def get_journey_prompt_view():
     st.title("Start Your Change Journey")
     
     character_name = st.text_input("Enter your character's name:")
-    character_type = st.selectbox("Choose your character type:", ["Human", "Elf", "Dwarf", "Wizard", "Animal"])
+    character_type = st.selectbox("Choose your character type:", ["Rabbit", "Bear", "Eagle", "Salamander", "Octopus"])
     
     st.write("What area of your life would you like to focus on for change?")
     
-    areas_of_change = ["Health", "Relationships", "Career", "Personal Growth", "Habits"]
+    areas_of_change = ["Feeling good about my body and mind", "Making friends", "Getting better at stuff", "Stop doing something"]
     selected_area = st.selectbox("Choose an area:", areas_of_change)
     
     specific_goal = st.text_input("What specific goal do you have in mind for this area?")
@@ -58,9 +58,9 @@ def generate_scenario():
     character_select = f"{game_state.character_name} the {game_state.character_type}"
 
     prompt = f"""
-    Generate a scenario for {character_select} who is in the {game_state.get_current_stage()} stage of change, 
+    Generate a young adult scenario for {character_select} who is in the {game_state.get_current_stage()} stage of change, 
     focusing on {game_state.focus_area} with the specific goal of {game_state.specific_goal}. 
-    The scenario should present a situation where the character is facing a decision related to their change process. 
+    The scenario should present a situation where the character is facing a decision related to their change process which will be connected to being {character_select}.
     Also, provide 3 possible choices for the user, tailored to their current stage of change.
     Each choice should use language from change talk, representing different levels of readiness to change:
     1. A choice representing sustain talk (negative change score)
@@ -69,9 +69,9 @@ def generate_scenario():
     Format the response as follows:
     Scenario: [Your scenario here]
     Choices:
-    1. [Sustain talk choice] (-5)
-    2. [Neutral choice] (0)
-    3. [Strong change talk choice] (+10)
+    1. [Sustain talk choice] 
+    2. [Neutral choice]
+    3. [Strong change talk choice]
     Keep the entire response under 200 words.
     """
     response = chat_session.get_ai_response(prompt)
@@ -116,9 +116,9 @@ def main_view():
         Outcome: [Your outcome here]
         New Scenario: [Your new scenario here]
         Choices:
-        1. [Sustain talk choice] (-5)
-        2. [Neutral choice] (0)
-        3. [Strong change talk choice] (+10)
+        1. [Sustain talk choice] 
+        2. [Neutral choice] 
+        3. [Strong change talk choice]
         Keep the entire response under 250 words.
         """
         response = chat_session.get_ai_response(prompt)
