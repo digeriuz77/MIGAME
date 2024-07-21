@@ -10,7 +10,7 @@ def create_image(prompt):
             response_format="b64_json",
             model="dall-e-3",
         )
-        return response
+        return response['data'][0]['b64_json']
     except Exception as e:
         print(f"Error creating image: {e}")
         return None
