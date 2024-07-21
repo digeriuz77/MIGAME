@@ -6,12 +6,18 @@ class GameState:
         self.specific_goal = ""
         self.progress = 0
         self.steps_taken = 0
+        self.character_name = ""
+        self.character_type = ""
 
     def set_focus_area(self, area):
         self.focus_area = area
 
     def set_specific_goal(self, goal):
         self.specific_goal = goal
+
+    def set_character(self, name, char_type):
+        self.character_name = name
+        self.character_type = char_type
 
     def get_current_stage(self):
         return self.stages[self._current_stage]
@@ -20,9 +26,11 @@ class GameState:
         self.steps_taken += 1
         return f"You chose to {choice.lower()}."
 
-    def increment_progress(self):
-        self.progress += 5
-        if self.progress >= 100:
+    def increment_progress(self, change_score):
+        self.progress += change_score
+        if self.progress < 0:
+            self.progress = 0
+        elif self.progress > 100:
             self.progress = 100
         
         # Check for stage advancement
