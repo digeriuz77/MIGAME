@@ -106,12 +106,12 @@ def main_view():
     st.write(f"Your Goal: {game_state.specific_goal}")
 
     # Display conversation history and images
-    for i in range(0, len(st.session_state.conversation_history), 3):
-        # Opening Description or Description from previous choice
+    for i in range(0, len(st.session_state.conversation_history), 4):
+        # Opening Description or Scenario
         st.write(st.session_state.conversation_history[i][1])
 
-        # Display choices and their images
-        for j in range(2):
+        # Display choices, their images, and outcomes
+        for j in range(3):
             if i + j + 1 < len(st.session_state.conversation_history):
                 choice = st.session_state.conversation_history[i + j + 1]
                 st.write(f"Choice {j + 1}: {choice[1]}")
@@ -121,11 +121,13 @@ def main_view():
                     st.image(f"data:image/png;base64,{image_b64}")
                 
                 if i + j + 2 < len(st.session_state.conversation_history):
-                    st.write(st.session_state.conversation_history[i + j + 2][1])
+                    outcome = st.session_state.conversation_history[i + j + 2]
+                    if outcome[0] == "Outcome":
+                        st.write(outcome[1])
 
     # Choice selection and Make Choice button
     with st.form(key='choice_form'):
-        choices = [choice.split(': ', 1)[-1].strip() for choice in st.session_state.current_choices]
+        choices = [choice[1] for choice in st.session_state.current_choices]
         choice = st.radio("What will you do?", choices)
         submit_button = st.form_submit_button(label='Make Choice')
 
@@ -137,18 +139,20 @@ def main_view():
         game_state.increment_progress(change_score)
         st.session_state.game_state = game_state  # Update the session state
 
-        prompt = f"{character_select} chose: \"{choice}\" in response to the previous scenario. They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, with the specific goal of {game_state.specific_goal}. Generate a brief (50 words max) response describing the outcome of this choice. Then, provide a new scenario and 3 new choices based on this outcome. Format the response as follows: [Outcome and new scenario here] Choices: 1. 2. 3. Keep the entire response under 250 words."
+        prompt = f"{character_select} chose: \"{choice}\" in response to the previous scenario. They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, with the specific goal of {game_state.specific_goal}. Generate a brief (50 words max) response describing the outcome of this choice. Then, provide a new scenario and 3 new choices based on this outcome. Format the response as follows: Outcome: [Your outcome here] New Scenario: [Your new scenario here] Choices: 1. [Choice 1] 2. [Choice 2] 3. [Choice 3] Keep the entire response under 250 words."
 
         response = chat_session.get_ai_response(prompt)
 
-        scenario, choices_text = response.split("Choices:")
+        outcome, new_content = response.split("New Scenario:")
+        new_scenario, choices_text = new_content.split("Choices:")
         new_choices = [choice.strip() for choice in choices_text.split("\n") if choice.strip()]
 
-        # Append the new scenario (this will be the opening description for the next round)
-        st.session_state.conversation_history.append(("AI", scenario.strip()))
+        # Append the chosen choice and its outcome
+        st.session_state.conversation_history.append(("Choice", choice))
+        st.session_state.conversation_history.append(("Outcome", outcome.replace("Outcome:", "").strip()))
         
-        # Generate and append image for the new scenario
-        image_prompt = create_image_prompt(chat_session, scenario.strip(), art_style)
+        # Generate and append image for the choice
+        image_prompt = create_image_prompt(chat_session, f"{character_select} - {choice}", art_style)
         if image_prompt:
             full_prompt = f"{art_style} of {image_prompt}"
             image_b64 = create_image(chat_session, full_prompt)
@@ -157,13 +161,11 @@ def main_view():
                     st.session_state.story_images = []
                 st.session_state.story_images.append((full_prompt, image_b64))
 
-        # Append the new choices and placeholder for their descriptions
-        for new_choice in new_choices:
-            st.session_state.conversation_history.append(("Choice", new_choice))
-            st.session_state.conversation_history.append(("Description", ""))  # Placeholder for description
-
-        st.session_state.current_scenario = scenario.strip()
-        st.session_state.current_choices = new_choices
+        # Append the new scenario
+        st.session_state.conversation_history.append(("Scenario", new_scenario.strip()))
+        
+        # Append the new choices
+        st.session_state.current_choices = [("Choice", choice) for choice in new_choices]
 
         st.rerun()  # Rerun the app to update the display
 
@@ -174,8 +176,8 @@ def main_view():
     st.write(f"Stage: {game_state.get_current_stage()}")
     st.write(f"Steps taken: {game_state.steps_taken}")
 
-    # Add "Print My Story" button when progress reaches 50%
-    if progress >= 0.5:
+    # Add "Print My Story" button when progress reaches 100%
+    if progress >= 1.0:
         if st.button("Print My Story"):
             print_story()
             
