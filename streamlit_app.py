@@ -108,7 +108,10 @@ def main_view():
     # Display conversation history and images
     for i, (speaker, message) in enumerate(st.session_state.conversation_history):
         if speaker == "AI":
-            st.write(message)
+            if message.startswith("Outcome:"):
+                st.write(message.replace("Outcome:", "").strip())
+            else:
+                st.write(message)
         else:
             st.write(f"{character_select}: {message}")
         
@@ -119,12 +122,13 @@ def main_view():
 
     # Choice selection and Make Choice button
     with st.form(key='choice_form'):
-        choice = st.radio("What will you do?", st.session_state.current_choices)
+        choices = [choice.split(': ', 1)[-1].strip() for choice in st.session_state.current_choices]
+        choice = st.radio("What will you do?", choices)
         submit_button = st.form_submit_button(label='Make Choice')
 
     if submit_button:
         change_scores = [-5, 0, 10]
-        choice_index = st.session_state.current_choices.index(choice)
+        choice_index = choices.index(choice)
         change_score = change_scores[choice_index]
         
         game_state.increment_progress(change_score)
@@ -141,7 +145,7 @@ def main_view():
         st.session_state.conversation_history.append(("AI", outcome.strip()))
         st.session_state.conversation_history.append(("AI", new_scenario.strip()))
         st.session_state.current_scenario = new_scenario.strip()
-        st.session_state.current_choices = [choice.strip().split(') ')[0] + ')' for choice in new_choices.split("\n") if choice.strip()]
+        st.session_state.current_choices = [choice.strip() for choice in new_choices.split("\n") if choice.strip()]
 
         # Generate and display image
         try:
@@ -163,11 +167,12 @@ def main_view():
 
         st.rerun()  # Rerun the app to update the display
 
-    st.sidebar.title("Your Progress")
-    st.sidebar.write(f"Stage: {game_state.get_current_stage()}")
-    st.sidebar.write(f"Steps taken: {game_state.steps_taken}")
+    # Move progress bar to the bottom
+    st.write("---")  # Add a separator
     progress = game_state.progress / 100
-    st.sidebar.progress(value=progress, text=f"Overall Progress: {game_state.progress}%")
+    st.progress(value=progress, text=f"Overall Progress: {game_state.progress}%")
+    st.write(f"Stage: {game_state.get_current_stage()}")
+    st.write(f"Steps taken: {game_state.steps_taken}")
 
     # Add "Print My Story" button when progress reaches 100%
     if progress >= 1.0:
