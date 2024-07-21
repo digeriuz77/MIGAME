@@ -1,8 +1,14 @@
 import openai
 from .chat_session import ChatSession
 
+import openai
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 def create_image(prompt):
     try:
+        logging.info(f"Attempting to create image with prompt: {prompt}")
         response = openai.Image.create(
             prompt=prompt,
             n=1,
@@ -10,9 +16,13 @@ def create_image(prompt):
             response_format="b64_json",
             model="dall-e-3",
         )
+        logging.info("Image creation successful")
         return response['data'][0]['b64_json']
+    except openai.error.OpenAIError as e:
+        logging.error(f"OpenAI API error: {str(e)}")
+        return None
     except Exception as e:
-        print(f"Error creating image: {e}")
+        logging.error(f"Unexpected error creating image: {str(e)}")
         return None
 
 GENERATE_IMAGE_DESCRIPTION_PROMPT = """
