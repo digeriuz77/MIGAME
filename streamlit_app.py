@@ -206,25 +206,31 @@ def display_hero_info(character_select, game_state, hero_journey_stage):
 
 def generate_and_display_image(chat_session, character_select, art_style):
     """Generate and display an image based on the current scenario."""
-    if st.session_state.get('generate_image_next_turn', True):  # Changed to True as default
+    if st.session_state.get('generate_image_next_turn', True):
         try:
             with st.spinner("Generating image..."):
                 image_prompt = create_image_prompt(chat_session, character_select, art_style)
                 if image_prompt:
                     full_prompt = f"{art_style} of {image_prompt}"
+                    logging.info(f"Full image prompt: {full_prompt}")
                     image_b64 = create_image(chat_session, full_prompt)
                     if image_b64:
                         st.session_state.conversation_history.append(("IMAGE", image_b64))
-                        st.session_state.generate_image_next_turn = False  # Reset the flag
+                        st.session_state.generate_image_next_turn = False
+                        logging.info("Image successfully generated and added to conversation history")
                     else:
                         st.warning("Unable to generate image for this scenario.")
+                        logging.warning("create_image returned None")
                 else:
                     st.warning("Unable to generate image prompt.")
+                    logging.warning("create_image_prompt returned None")
         except Exception as e:
             st.error(f"An error occurred while generating the image: {str(e)}")
+            logging.exception("Error in generate_and_display_image")
         
     else:
-        st.session_state.generate_image_next_turn = True  # Set flag for next turn
+        logging.info("Skipping image generation this turn")
+        st.session_state.generate_image_next_turn = True
 
 def display_conversation_history():
     """Display the conversation history and images."""
