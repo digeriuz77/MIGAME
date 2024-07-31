@@ -90,7 +90,7 @@ def get_journey_prompt_view():
         st.session_state.journey_in_progress = True
         generate_scenario()
         save_session(SESSION_DIR)
-        st.rerun()
+        st.rerun()  # Correct usage of rerun()
 
 def generate_scenario():
     """Generate a new scenario for the hero's journey."""
@@ -126,9 +126,15 @@ def create_scenario_prompt(game_state, hero_journey_stage, character_select):
 
 def process_scenario_response(response):
     """Process the AI-generated scenario and choices."""
-    scenario, choices = response.split("\n1.")
-    st.session_state.current_scenario = scenario.strip()
-    choices = "1." + choices
+    parts = response.split("\n1.")
+    if len(parts) >= 2:
+        scenario = parts[0].strip()
+        choices = "1." + parts[1].strip()
+    else:
+        scenario = response.strip()
+        choices = ""
+
+    st.session_state.current_scenario = scenario
     st.session_state.current_choices = [
         choice.strip() for choice in choices.split("\n") if choice.strip()
     ]
@@ -171,7 +177,7 @@ def display_choices():
     if submit_button:
         process_user_choice(choice)
         save_session(SESSION_DIR)
-        st.rerun()
+        st.rerun()  # Correct usage of rerun()
 
 def process_user_choice(choice):
     """Process the user's choice and generate the next part of the story."""
@@ -350,7 +356,7 @@ def main():
             del st.session_state[key]
         init_state()
         save_session(SESSION_DIR)
-        st.rerun()
+        st.rerun()  # Correct usage of rerun()
 
 if __name__ == "__main__":
     main()
