@@ -5,7 +5,7 @@ from utils.game_state import GameState
 from utils.chat_session import ChatSession
 from utils.call_images import create_image, create_image_prompt
 
-st.set_page_config("Motivational Interviewing Journey", layout="wide")
+st.set_page_config("Heroes' journey", layout="wide")
 
 SESSION_DIR = Path("sessions")
 SESSION_DIR.mkdir(parents=True, exist_ok=True)
@@ -41,7 +41,7 @@ def init_state():
         st.session_state.art_style = "Digital painting"
 
 def get_journey_prompt_view():
-    st.title("Start Your Change Journey")
+    st.title("Start Your Hero Journey")
     
     character_name = st.text_input("Enter your character's name:")
     character_type = st.text_input("What avatar would you like to have? (It works best if you pick a creature)")
@@ -49,7 +49,7 @@ def get_journey_prompt_view():
     st.write("Choose an art style for your journey:")
     art_style = st.selectbox("Art style:", ART_STYLES)
     
-    st.write("What area of your character's life would you like to focus on to change?")
+    st.write("What area of your character's life would you like to focus on to change? (to make them succeed!)")
     
     areas_of_change = ["Feeling good about body and mind", "Making friends", "Getting better at stuff", "Stop doing something"]
     selected_area = st.selectbox("Choose an area:", areas_of_change)
