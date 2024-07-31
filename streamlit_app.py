@@ -321,4 +321,12 @@ def main():
     init_state()
 
     if not st.session_state.journey_in_progress:
-        get_journey_
+        get_journey_prompt_view()
+    else:
+        main_view()
+
+    if st.button("Reset Journey"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        init_state()
+        st.rerun()
