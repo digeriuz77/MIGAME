@@ -1,6 +1,6 @@
 class GameState:
     def __init__(self):
-        self.stages = ["Pre-contemplation", "Contemplation", "Preparation", "Action", "Maintenance"]
+        self.stages = HERO_JOURNEY_STAGES  # Use the constant from the main file
         self._current_stage = 0
         self.focus_area = ""
         self.specific_goal = ""
@@ -26,7 +26,7 @@ class GameState:
         self.steps_taken += 1
         return f"You chose to {choice.lower()}."
 
-    def increment_progress(self, change_score):
+   def increment_progress(self, change_score):
         self.progress += change_score
         if self.progress < 0:
             self.progress = 0
@@ -34,7 +34,8 @@ class GameState:
             self.progress = 100
         
         # Check for stage advancement
-        if self.progress >= (self._current_stage + 1) * 20:
+        stage_threshold = 100 / len(self.stages)
+        if self.progress >= (self._current_stage + 1) * stage_threshold:
             self.advance_stage()
 
     def advance_stage(self):
