@@ -1,3 +1,18 @@
+HERO_JOURNEY_STAGES = [
+    "The Ordinary World",
+    "The Call to Adventure",
+    "Refusal of the Call",
+    "Meeting the Mentor",
+    "Crossing the Threshold",
+    "Tests, Allies, and Enemies",
+    "Approach to the Inmost Cave",
+    "The Ordeal",
+    "Reward (Seizing the Sword)",
+    "The Road Back",
+    "Resurrection",
+    "Return with the Elixir"
+]
+
 class GameState:
     def __init__(self):
         self.stages = HERO_JOURNEY_STAGES  # Make sure this constant is defined or imported
