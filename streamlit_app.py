@@ -140,6 +140,7 @@ def generate_scenario():
         st.session_state.current_scenario = "Error generating scenario. Please try again."
         st.session_state.current_choices = ["Retry", "Continue with caution", "End journey"]
         st.session_state.conversation_history.append(("ERROR", "Error in scenario generation"))
+
 def main_view():
     game_state = st.session_state.game_state
     chat_session = st.session_state.chat_session
@@ -151,7 +152,7 @@ def main_view():
     st.write(f"Current Stage of Change: {game_state.get_current_stage()}")
     st.write(f"Hero's Journey Stage: {hero_journey_stage}")
     st.write(f"Your Goal: {game_state.specific_goal}")
-
+    
     # Generate and add image if flag is set
     if st.session_state.get('generate_image_next_turn', False):
         try:
@@ -185,11 +186,17 @@ def main_view():
         elif item_type == "ERROR":
             st.error(content)
             
+# Check if current_choices exists in session_state
+    if "current_choices" not in st.session_state or not st.session_state.current_choices:
+        # If not, generate an initial scenario
+        generate_scenario()
+        st.rerun()
+            
     # Choice selection and Make Choice button
-with st.form(key='choice_form'):
-    choices = st.session_state.current_choices
-    choice = st.radio("What will you do?", choices)
-    submit_button = st.form_submit_button(label='Make Choice')
+    with st.form(key='choice_form'):
+        choices = st.session_state.current_choices
+        choice = st.radio("What will you do?", choices)
+        submit_button = st.form_submit_button(label='Make Choice')
 
 if submit_button:
     change_scores = [1, 2, 3]  # Adjusted to fit the 12-part structure
