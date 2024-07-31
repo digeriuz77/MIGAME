@@ -11,5 +11,6 @@ def reset_state():
     init_state()
 
 def add_character_names(input_text, names):
-    # Implement character name substitution if needed
+    for name, replacement in names.items():
+        input_text = input_text.replace(f"[{name}]", replacement)
     return input_text
