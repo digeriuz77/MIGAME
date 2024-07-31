@@ -1,7 +1,6 @@
 import streamlit as st
 import random
 from pathlib import Path
-from utils.game_state import GameState
 from utils.chat_session import ChatSession
 from utils.call_images import create_image, create_image_prompt
 from fpdf import FPDF
@@ -11,10 +10,10 @@ from PIL import Image
 
 # Constants
 ART_STYLES = [
-    "Digital painting", "Watercolor", "Oil painting", "Pencil sketch",
-    "Comic book art", "Pixel art", "3D render", "Storybook illustration",
-    "Vector art", "Charcoal drawing", "Pastel drawing", "Collage",
-    "Low poly", "Isometric 3D", "Claymation", "Anime", "Vintage Disney",
+    "Digital painting", "Watercolor", "Oil painting", "Pencil sketch", 
+    "Comic book art", "Pixel art", "3D render", "Storybook illustration", 
+    "Vector art", "Charcoal drawing", "Pastel drawing", "Collage", 
+    "Low poly", "Isometric 3D", "Claymation", "Anime", "Vintage Disney", 
     "Studio Ghibli", "Pop Art", "Art Nouveau"
 ]
 
@@ -29,6 +28,53 @@ AREAS_OF_CHANGE = [
     "Feeling good about body and mind", "Making friends",
     "Getting better at stuff", "Stop doing something"
 ]
+
+# Embedded GameState class
+class GameState:
+    def __init__(self):
+        self.stages = HERO_JOURNEY_STAGES
+        self._current_stage = 0
+        self.focus_area = ""
+        self.specific_goal = ""
+        self.progress = 0
+        self.steps_taken = 0
+        self.character_name = ""
+        self.character_type = ""
+
+    def set_focus_area(self, area):
+        self.focus_area = area
+
+    def set_specific_goal(self, goal):
+        self.specific_goal = goal
+
+    def set_character(self, name, char_type):
+        self.character_name = name
+        self.character_type = char_type
+
+    def get_current_stage(self):
+        return self.stages[self._current_stage]
+
+    def process_choice(self, choice):
+        self.steps_taken += 1
+        return f"You chose to {choice.lower()}."
+
+    def increment_progress(self, change_score):
+        self.progress += change_score
+        if self.progress < 0:
+            self.progress = 0
+        elif self.progress > 100:
+            self.progress = 100
+        
+        # Check for stage advancement
+        stage_threshold = 100 / len(self.stages)
+        if self.progress >= (self._current_stage + 1) * stage_threshold:
+            self.advance_stage()
+
+    def advance_stage(self):
+        if self._current_stage < len(self.stages) - 1:
+            self._current_stage += 1
+
+# Rest of your Streamlit app code...
 
 # Setup
 st.set_page_config("Heroes' journey", layout="wide")
@@ -357,7 +403,6 @@ def print_story():
     )
 
 def main():
-    """Main function to run the Streamlit app."""
     init_state()
 
     if not st.session_state.journey_in_progress:
