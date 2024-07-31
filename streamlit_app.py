@@ -90,7 +90,7 @@ def get_journey_prompt_view():
         st.session_state.journey_in_progress = True
         generate_scenario()
         save_session(SESSION_DIR)
-        st.experimental_rerun()
+        st.rerun()
 
 def generate_scenario():
     """Generate a new scenario for the hero's journey."""
@@ -171,7 +171,7 @@ def display_choices():
     if submit_button:
         process_user_choice(choice)
         save_session(SESSION_DIR)
-        st.experimental_rerun()
+        st.rerun()
 
 def process_user_choice(choice):
     """Process the user's choice and generate the next part of the story."""
@@ -350,7 +350,7 @@ def main():
             del st.session_state[key]
         init_state()
         save_session(SESSION_DIR)
-        st.experimental_rerun()
+        st.rerun()
 
 if __name__ == "__main__":
     main()
