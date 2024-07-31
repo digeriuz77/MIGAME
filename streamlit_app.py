@@ -199,76 +199,76 @@ def main_view():
         submit_button = st.form_submit_button(label='Make Choice')
 
 if submit_button:
-    change_scores = [1, 2, 3]  # Adjusted to fit the 12-part structure
-    choice_index = choices.index(choice)
-    change_score = change_scores[choice_index]
-    
-    game_state.increment_progress(change_score)
-    st.session_state.game_state = game_state  # Update the session state
+            change_scores = [1, 2, 3]  # Adjusted to fit the 12-part structure
+            choice_index = choices.index(choice)
+            change_score = change_scores[choice_index]
+            
+            game_state.increment_progress(change_score)
+            st.session_state.game_state = game_state  # Update the session state
 
-    # Progress the hero's journey stage
-    st.session_state.hero_journey_stage = min(st.session_state.hero_journey_stage + 1, len(HERO_JOURNEY_STAGES) - 1)
+            # Progress the hero's journey stage
+            st.session_state.hero_journey_stage = min(st.session_state.hero_journey_stage + 1, len(HERO_JOURNEY_STAGES) - 1)
 
-    context = "\n".join([f"{item[0]}: {item[1]}" for item in st.session_state.conversation_history[-5:]])
-    hero_journey_stage = HERO_JOURNEY_STAGES[st.session_state.hero_journey_stage]
-    
-    
-    prompt = f"""
-    Previous context:
-    {context}
+            context = "\n".join([f"{item[0]}: {item[1]}" for item in st.session_state.conversation_history[-5:]])
+            hero_journey_stage = HERO_JOURNEY_STAGES[st.session_state.hero_journey_stage]
 
-    {character_select} chose: "{choice}" in response to the previous scenario. 
-    They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, 
-    with the specific goal of {game_state.specific_goal}. 
-    The current hero's journey stage is: {hero_journey_stage}.
+            prompt = f"""
+            Previous context:
+            {context}
 
-    Generate a brief (110 words max) response describing the outcome of this choice, 
-    their feelings about it, and what the character learned or how they grew.
+            {character_select} chose: "{choice}" in response to the previous scenario. 
+            They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, 
+            with the specific goal of {game_state.specific_goal}. 
+            The current hero's journey stage is: {hero_journey_stage}.
 
-    Then, provide a new scenario and 3 new choices based on this outcome, following the same format as before.
-    Ensure the new scenario and choices align with the current hero's journey stage and the character's goal.
+            Generate a brief (110 words max) response describing the outcome of this choice, 
+            their feelings about it, and what the character learned or how they grew.
 
-    Format the response as follows:
-    Outcome: [Your outcome here]
-    New Scenario: [Your new scenario here]
-    Choices:
-    1. [Choice representing hesitation or retreat]
-    2. [Choice representing a cautious step forward]
-    3. [Choice representing a bold, heroic action]
+            Then, provide a new scenario and 3 new choices based on this outcome, following the same format as before.
+            Ensure the new scenario and choices align with the current hero's journey stage and the character's goal.
 
-    Keep the entire response under 350 words.
-    """
-    response = chat_session.get_ai_response(prompt)
+            Format the response as follows:
+            Outcome: [Your outcome here]
+            New Scenario: [Your new scenario here]
+            Choices:
+            1. [Choice representing hesitation or retreat]
+            2. [Choice representing a cautious step forward]
+            3. [Choice representing a bold, heroic action]
 
-    try:
-        outcome, new_content = response.split("New Scenario:")
-        new_scenario, new_choices = new_content.split("Choices:")
+            Keep the entire response under 350 words.
+            """
 
-        # Append choice and outcome to conversation history
-        st.session_state.conversation_history.append(("CHOICE", choice))
-        st.session_state.conversation_history.append(("OUTCOME", outcome.strip()))
+            try:
+                response = chat_session.get_ai_response(prompt)
 
-        # Set flag to generate image on next turn
-        st.session_state.generate_image_next_turn = True
+                outcome, new_content = response.split("New Scenario:")
+                new_scenario, new_choices = new_content.split("Choices:")
 
-        # Append new scenario
-        st.session_state.conversation_history.append(("SCENARIO", new_scenario.strip()))
+                # Append choice and outcome to conversation history
+                st.session_state.conversation_history.append(("CHOICE", choice))
+                st.session_state.conversation_history.append(("OUTCOME", outcome.strip()))
 
-        # Update current choices
-        new_choices_list = [choice.strip() for choice in new_choices.split("\n") if choice.strip()]
-        if len(new_choices_list) != 3:
-            raise ValueError("Expected 3 choices, but got a different number.")
-        
-        # Shuffle the new choices
-        random.shuffle(new_choices_list)
-        st.session_state.current_choices = new_choices_list
+                # Set flag to generate image on next turn
+                st.session_state.generate_image_next_turn = True
 
-    except Exception as e:
-        st.error(f"An error occurred while processing the AI response: {str(e)}")
-        st.session_state.conversation_history.append(("ERROR", "Error in generating new scenario"))
-        st.session_state.current_choices = ["Retry", "Continue with caution", "End journey"]
+                # Append new scenario
+                st.session_state.conversation_history.append(("SCENARIO", new_scenario.strip()))
 
-    st.rerun()  # Rerun the app to update the display
+                # Update current choices
+                new_choices_list = [choice.strip() for choice in new_choices.split("\n") if choice.strip()]
+                if len(new_choices_list) != 3:
+                    raise ValueError("Expected 3 choices, but got a different number.")
+                
+                # Shuffle the new choices
+                random.shuffle(new_choices_list)
+                st.session_state.current_choices = new_choices_list
+
+            except Exception as e:
+                st.error(f"An error occurred while processing the AI response: {str(e)}")
+                st.session_state.conversation_history.append(("ERROR", "Error in generating new scenario"))
+                st.session_state.current_choices = ["Retry", "Continue with caution", "End journey"]
+
+            st.rerun()  # Rerun the app to update the display
 
     # Move progress bar to the bottom
     st.write("---")  # Add a separator
