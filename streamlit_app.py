@@ -83,6 +83,7 @@ def get_journey_prompt_view():
         st.session_state.game_state.set_specific_goal(specific_goal)
         st.session_state.art_style = art_style
         st.session_state.journey_in_progress = True
+        st.session_state.hero_journey_stage = 0  # Reset hero journey stage
         generate_scenario()
         st.rerun()
 
