@@ -1,7 +1,6 @@
-import openai
-from openai import OpenAI
 import logging
 import streamlit as st
+from openai import OpenAI
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,7 +17,8 @@ def create_image(chat_session, prompt):
         return None
     try:
         logging.info(f"Attempting to create image with prompt: {prompt}")
-        response = chat_session.client.images.generate(
+        client = get_openai_client()
+        response = client.images.generate(
             model="dall-e-3",
             prompt=prompt,
             n=1,
@@ -54,7 +54,7 @@ def create_image_prompt(chat_session, character_select: str, art_style: str):
         image_prompt = chat_session.get_ai_response(prompt)
         
         logging.info(f"Generated image prompt: {image_prompt}")
-        return image_prompt
+        return image_prompt.strip()  # Ensure there's no leading/trailing whitespace
     except Exception as e:
         logging.error(f"Error creating image prompt: {str(e)}")
         return None
