@@ -49,9 +49,9 @@ def get_journey_prompt_view():
     st.write("Choose an art style for your journey:")
     art_style = st.selectbox("Art style:", ART_STYLES)
     
-    st.write("What area of your life would you like to focus on for change?")
+    st.write("What area of your character's life would you like to focus on to change?")
     
-    areas_of_change = ["Feeling good about my body and mind", "Making friends", "Getting better at stuff", "Stop doing something"]
+    areas_of_change = ["Feeling good about body and mind", "Making friends", "Getting better at stuff", "Stop doing something"]
     selected_area = st.selectbox("Choose an area:", areas_of_change)
     
     specific_goal = st.text_input("What specific goal do you have in mind for this area?")
@@ -76,17 +76,16 @@ def generate_scenario():
     focusing on {game_state.focus_area} with the specific goal of {game_state.specific_goal}. 
     The scenario should present a situation where the character is facing a decision related to their change process which will be connected to being {character_select}.
     Also, provide 3 possible choices for the user, tailored to their current stage of change.
-    Each choice should use language from change talk, representing different levels of readiness to change:
-    1. A choice representing sustain talk (negative change score)
-    2. A neutral choice (no change score)
-    3. A choice representing strong change talk (positive change score)
+    1. A choice representing a lack of movement towards a goal
+    2. A neutral choice
+    3. A choice representing a strong choice towaards the goal.
     Format the response as follows:
     Scenario: [Your scenario here]
     Choices:
-    1. [Sustain talk choice] 
-    2. [Neutral choice]
-    3. [Strong change talk choice]
-    Keep the entire response under 200 words.
+    1. 
+    2. 
+    3. 
+    Keep the entire response under 250 words.
     """
     response = chat_session.get_ai_response(prompt)
     
@@ -150,7 +149,7 @@ def main_view():
         game_state.increment_progress(change_score)
         st.session_state.game_state = game_state  # Update the session state
 
-        prompt = f"{character_select} chose: \"{choice}\" in response to the previous scenario. They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, with the specific goal of {game_state.specific_goal}. Generate a brief (50 words max) response describing the outcome of this choice. Then, provide a new scenario and 3 new choices based on this outcome, following the same format as before. Format the response as follows: Outcome: [Your outcome here] New Scenario: [Your new scenario here] Choices: 1. 2. 3. Keep the entire response under 250 words."
+        prompt = f"{character_select} chose: \"{choice}\" in response to the previous scenario. They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, with the specific goal of {game_state.specific_goal}. Generate a brief (110 words max) response describing the outcome of this choice, their feelings about it and what the character noticed. Then, provide a new scenario and 3 new choices based on this outcome, following the same format as before and paying attention to  Format the response as follows: Outcome: [Your outcome here] New Scenario: [Your new scenario here] Choices: 1. 2. 3. Keep the entire response under 290 words."
 
         response = chat_session.get_ai_response(prompt)
 
