@@ -1,17 +1,4 @@
-HERO_JOURNEY_STAGES = [
-    "The Ordinary World",
-    "The Call to Adventure",
-    "Refusal of the Call",
-    "Meeting the Mentor",
-    "Crossing the Threshold",
-    "Tests, Allies, and Enemies",
-    "Approach to the Inmost Cave",
-    "The Ordeal",
-    "Reward (Seizing the Sword)",
-    "The Road Back",
-    "Resurrection",
-    "Return with the Elixir"
-]
+from streamlit_app import HERO_JOURNEY_STAGES
 
 class GameState:
     def __init__(self):
