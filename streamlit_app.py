@@ -237,7 +237,6 @@ if submit_button:
 
             Keep the entire response under 350 words.
             """
-
             try:
                 response = chat_session.get_ai_response(prompt)
 
@@ -269,7 +268,7 @@ if submit_button:
                 st.session_state.current_choices = ["Retry", "Continue with caution", "End journey"]
 
             st.rerun()  # Rerun the app to update the display
-
+            
     # Move progress bar to the bottom
     st.write("---")  # Add a separator
     progress = game_state.progress / 100
