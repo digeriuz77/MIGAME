@@ -90,7 +90,7 @@ def get_journey_prompt_view():
         st.session_state.journey_in_progress = True
         generate_scenario()
         save_session(SESSION_DIR)
-        st.rerun()
+        st.experimental_rerun()
 
 def generate_scenario():
     """Generate a new scenario for the hero's journey."""
@@ -171,7 +171,7 @@ def display_choices():
     if submit_button:
         process_user_choice(choice)
         save_session(SESSION_DIR)
-        st.rerun()
+        st.experimental_rerun()
 
 def process_user_choice(choice):
     """Process the user's choice and generate the next part of the story."""
@@ -211,42 +211,35 @@ def create_choice_prompt(game_state, hero_journey_stage, character_select, choic
 def process_choice_response(response, choice):
     """Process the AI response to the hero's choice."""
     try:
-        # First, try to split by "Outcome:" and "New Scenario:"
         parts = response.split("New Scenario:")
         if len(parts) == 2:
             outcome = parts[0].replace("Outcome:", "").strip()
             new_content = parts[1]
         else:
-            # If that fails, just consider everything before the first number as the outcome
             outcome = response.split("1.")[0].strip()
             new_content = response[len(outcome):].strip()
 
-        # Split the new content into scenario and choices
         choices_start = new_content.find("1.")
         if choices_start != -1:
             new_scenario = new_content[:choices_start].strip()
             new_choices = new_content[choices_start:].strip()
         else:
-            # If no numbered choices found, consider everything as the new scenario
             new_scenario = new_content
             new_choices = ""
 
         st.session_state.conversation_history.append(("CHOICE", choice))
         st.session_state.conversation_history.append(("OUTCOME", outcome))
         st.session_state.generate_image_next_turn = True
-        st.write("Debug: Setting generate_image_next_turn to True")
         st.session_state.conversation_history.append(("SCENARIO", new_scenario))
 
-        # Process new choices
         choice_list = [c.strip() for c in new_choices.split("\n") if c.strip()]
         if len(choice_list) < 3:
-            # If less than 3 choices, generate some generic ones
             choice_list = [
                 "Proceed cautiously",
                 "Take a balanced approach",
                 "Act boldly and decisively"
             ]
-        st.session_state.current_choices = choice_list[:3]  # Ensure only 3 choices
+        st.session_state.current_choices = choice_list[:3]
 
     except Exception as e:
         st.error(f"Error processing AI response: {str(e)}")
@@ -260,7 +253,7 @@ def display_progress():
 
     st.write("---")
     progress = game_state.progress / 100
-    st.progress(value=progress, text=f"Journey Progress: {game_state.progress}%")
+    st.progress(progress, text=f"Journey Progress: {game_state.progress}%")
     st.write(f"Current Stage: {hero_journey_stage}")
     st.write(f"Steps taken: {game_state.steps_taken}")
 
@@ -269,6 +262,7 @@ def display_progress():
             print_story()
 
 def generate_and_display_image():
+    """Generate and display an image for the current part of the journey."""
     if st.session_state.get('generate_image_next_turn', False):
         st.write("Debug: generate_image_next_turn is True, generating image...")
         game_state = st.session_state.game_state
@@ -281,30 +275,6 @@ def generate_and_display_image():
             with st.spinner("Creating an image of your hero's journey..."):
                 image_prompt = create_image_prompt(chat_session, character_select, art_style)
                 st.write(f"Debug: Generated image prompt: {image_prompt}")
-                if image_prompt:
-                    full_prompt = f"{art_style} style image of {image_prompt}"
-                    image_b64 = create_image(chat_session, full_prompt)
-                    if image_b64:
-                        st.session_state.conversation_history.append(("IMAGE", image_b64))
-                    else:
-                        st.warning("Unable to create an image for this part of the journey.")
-                else:
-                    st.warning("Unable to generate an image description.")
-        except Exception as e:
-            st.error(f"An error occurred while creating the image: {str(e)}")
-        
-        st.session_state.generate_image_next_turn = False
-    """Generate and display an image for the current part of the journey."""
-    if st.session_state.get('generate_image_next_turn', False):
-        game_state = st.session_state.game_state
-        chat_session = st.session_state.chat_session
-        character_select = (f"{game_state.character_name} the {game_state.character_type} "
-                            f"with {game_state.distinguishing_feature}")
-        art_style = st.session_state.art_style
-
-        try:
-            with st.spinner("Creating an image of your hero's journey..."):
-                image_prompt = create_image_prompt(chat_session, character_select, art_style)
                 if image_prompt:
                     full_prompt = f"{art_style} style image of {image_prompt}"
                     image_b64 = create_image(chat_session, full_prompt)
@@ -380,7 +350,7 @@ def main():
             del st.session_state[key]
         init_state()
         save_session(SESSION_DIR)
-        st.rerun()
+        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
