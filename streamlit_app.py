@@ -234,6 +234,7 @@ def process_choice_response(response, choice):
         st.session_state.conversation_history.append(("CHOICE", choice))
         st.session_state.conversation_history.append(("OUTCOME", outcome))
         st.session_state.generate_image_next_turn = True
+st.write("Debug: Setting generate_image_next_turn to True")
         st.session_state.conversation_history.append(("SCENARIO", new_scenario))
 
         # Process new choices
@@ -268,6 +269,31 @@ def display_progress():
             print_story()
 
 def generate_and_display_image():
+    if st.session_state.get('generate_image_next_turn', False):
+        st.write("Debug: generate_image_next_turn is True, generating image...")
+        game_state = st.session_state.game_state
+        chat_session = st.session_state.chat_session
+        character_select = (f"{game_state.character_name} the {game_state.character_type} "
+                            f"with {game_state.distinguishing_feature}")
+        art_style = st.session_state.art_style
+
+        try:
+            with st.spinner("Creating an image of your hero's journey..."):
+                image_prompt = create_image_prompt(chat_session, character_select, art_style)
+                st.write(f"Debug: Generated image prompt: {image_prompt}")
+                if image_prompt:
+                    full_prompt = f"{art_style} style image of {image_prompt}"
+                    image_b64 = create_image(chat_session, full_prompt)
+                    if image_b64:
+                        st.session_state.conversation_history.append(("IMAGE", image_b64))
+                    else:
+                        st.warning("Unable to create an image for this part of the journey.")
+                else:
+                    st.warning("Unable to generate an image description.")
+        except Exception as e:
+            st.error(f"An error occurred while creating the image: {str(e)}")
+        
+        st.session_state.generate_image_next_turn = False
     """Generate and display an image for the current part of the journey."""
     if st.session_state.get('generate_image_next_turn', False):
         game_state = st.session_state.game_state
