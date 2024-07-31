@@ -1,6 +1,3 @@
-from openai import OpenAI
-import streamlit as st
-
 class ChatSession:
     def __init__(self):
         self.history = []
@@ -11,7 +8,7 @@ class ChatSession:
         response = self.client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a motivational interviewing expert."},
+                {"role": "system", "content": "You are a storytelling expert specializing in the hero's journey narrative structure."},
                 *self.history
             ]
         )
