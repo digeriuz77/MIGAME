@@ -201,16 +201,12 @@ def process_user_choice(choice, game_state, chat_session, character_select):
     game_state.increment_progress(change_score)
     st.session_state.game_state = game_state
 
-    st.session_state.hero_journey_stage = min(
-        st.session_state.hero_journey_stage + 1,
-        len(HERO_JOURNEY_STAGES) - 1
-    )
+    hero_journey_stage = HERO_JOURNEY_STAGES[game_state._current_stage]
 
     context = "\n".join(
         f"{item[0]}: {item[1]}"
         for item in st.session_state.conversation_history[-5:]
     )
-    hero_journey_stage = HERO_JOURNEY_STAGES[st.session_state.hero_journey_stage]
 
     prompt = create_choice_prompt(game_state, hero_journey_stage, context, character_select, choice)
 
@@ -237,6 +233,9 @@ def process_user_choice(choice, game_state, chat_session, character_select):
 
     except Exception as e:
         handle_choice_processing_error(e)
+
+    # Ensure we always set this flag to generate a new image
+    st.session_state.generate_image_next_turn = True
 
 def create_choice_prompt(game_state, hero_journey_stage, context, character_select, choice):
     """Create the prompt for processing a user's choice."""
