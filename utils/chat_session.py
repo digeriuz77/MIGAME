@@ -1,8 +1,5 @@
-# /mount/src/migame/utils/chat_session.py
-
 from openai import OpenAI
 import streamlit as st
-import logging
 
 class ChatSession:
     def __init__(self):
@@ -14,7 +11,6 @@ class ChatSession:
             if "openai_api_key" in st.secrets:
                 self.client = OpenAI(api_key=st.secrets["openai_api_key"])
             else:
-                logging.error("OpenAI API key not found in Streamlit secrets.")
                 st.error("OpenAI API key not found. Please set it in your Streamlit secrets.")
                 st.stop()
 
@@ -26,7 +22,7 @@ class ChatSession:
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a storytelling expert specializing in the hero's journey narrative structure."},
+                    {"role": "system", "content": "You are a storytelling expert specializing in the hero's journey narrative structure for children."},
                     *self.history
                 ]
             )
@@ -34,5 +30,5 @@ class ChatSession:
             self.history.append({"role": "assistant", "content": ai_response})
             return ai_response
         except Exception as e:
-            logging.error(f"Error in get_ai_response: {str(e)}")
+            st.error(f"Error in getting AI response: {str(e)}")
             return None
