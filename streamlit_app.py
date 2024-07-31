@@ -210,17 +210,47 @@ def create_choice_prompt(game_state, hero_journey_stage, character_select, choic
 
 def process_choice_response(response, choice):
     """Process the AI response to the hero's choice."""
-    outcome, new_content = response.split("\n1.")
-    new_scenario, new_choices = new_content.split("\n1.")
-    new_choices = "1." + new_choices
+    try:
+        # First, try to split by "Outcome:" and "New Scenario:"
+        parts = response.split("New Scenario:")
+        if len(parts) == 2:
+            outcome = parts[0].replace("Outcome:", "").strip()
+            new_content = parts[1]
+        else:
+            # If that fails, just consider everything before the first number as the outcome
+            outcome = response.split("1.")[0].strip()
+            new_content = response[len(outcome):].strip()
 
-    st.session_state.conversation_history.append(("CHOICE", choice))
-    st.session_state.conversation_history.append(("OUTCOME", outcome.strip()))
-    st.session_state.generate_image_next_turn = True
-    st.session_state.conversation_history.append(("SCENARIO", new_scenario.strip()))
-    st.session_state.current_choices = [
-        choice.strip() for choice in new_choices.split("\n") if choice.strip()
-    ]
+        # Split the new content into scenario and choices
+        choices_start = new_content.find("1.")
+        if choices_start != -1:
+            new_scenario = new_content[:choices_start].strip()
+            new_choices = new_content[choices_start:].strip()
+        else:
+            # If no numbered choices found, consider everything as the new scenario
+            new_scenario = new_content
+            new_choices = ""
+
+        st.session_state.conversation_history.append(("CHOICE", choice))
+        st.session_state.conversation_history.append(("OUTCOME", outcome))
+        st.session_state.generate_image_next_turn = True
+        st.session_state.conversation_history.append(("SCENARIO", new_scenario))
+
+        # Process new choices
+        choice_list = [c.strip() for c in new_choices.split("\n") if c.strip()]
+        if len(choice_list) < 3:
+            # If less than 3 choices, generate some generic ones
+            choice_list = [
+                "Proceed cautiously",
+                "Take a balanced approach",
+                "Act boldly and decisively"
+            ]
+        st.session_state.current_choices = choice_list[:3]  # Ensure only 3 choices
+
+    except Exception as e:
+        st.error(f"Error processing AI response: {str(e)}")
+        st.session_state.conversation_history.append(("ERROR", "Error processing the story. Please try again."))
+        st.session_state.current_choices = ["Retry", "Continue cautiously", "End journey"]
 
 def display_progress():
     """Display the hero's journey progress."""
