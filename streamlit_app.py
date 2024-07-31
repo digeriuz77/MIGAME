@@ -74,6 +74,10 @@ class GameState:
         if self._current_stage < len(self.stages) - 1:
             self._current_stage += 1
 
+# Initialize the ChatSession client
+    if "chat_session" in st.session_state:
+        st.session_state.chat_session.initialize_client()
+        
 # Rest of your Streamlit app code...
 
 # Setup
