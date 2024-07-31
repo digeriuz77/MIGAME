@@ -1,5 +1,5 @@
 streamlit==1.22.0
-openai==0.27.0
+openai
 Pillow==9.5.0
 fpdf==1.7.2
 python-dotenv==1.0.0
