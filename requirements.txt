@@ -1,3 +1,7 @@
 streamlit
 openai
 plotly
+Pillow==9.5.0
+fpdf==1.7.2
+python-dotenv==1.0.0
+requests==2.28.2
