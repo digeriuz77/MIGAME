@@ -1,4 +1,4 @@
-streamlit==1.22.0
+streamlit
 openai
 Pillow==9.5.0
 fpdf==1.7.2
