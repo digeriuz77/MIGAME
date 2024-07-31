@@ -22,6 +22,21 @@ ART_STYLES = [
     "Studio Ghibli", "Pop Art", "Art Nouveau"
 ]
 
+HERO_JOURNEY_STAGES = [
+    "The Ordinary World",
+    "The Call to Adventure",
+    "Refusal of the Call",
+    "Meeting the Mentor",
+    "Crossing the Threshold",
+    "Tests, Allies, and Enemies",
+    "Approach to the Inmost Cave",
+    "The Ordeal",
+    "Reward (Seizing the Sword)",
+    "The Road Back",
+    "Resurrection",
+    "Return with the Elixir"
+]
+
 def init_state():
     if "openai_api_key" not in st.secrets:
         st.error("OpenAI API key not found. Please set it in your Streamlit secrets.")
@@ -43,9 +58,11 @@ def init_state():
         st.session_state.current_choices = []
     if "art_style" not in st.session_state:
         st.session_state.art_style = "Digital painting"
+    if "hero_journey_stage" not in st.session_state:
+        st.session_state.hero_journey_stage = 0
 
 def get_journey_prompt_view():
-    st.title("Start Your Hero Journey")
+    st.title("Start Your Hero's Journey")
     
     character_name = st.text_input("Enter your character's name:")
     character_type = st.text_input("What avatar would you like to have? (It works best if you pick a creature)")
@@ -72,11 +89,11 @@ def get_journey_prompt_view():
 def generate_scenario():
     game_state = st.session_state.game_state
     chat_session = st.session_state.chat_session
+    hero_journey_stage = HERO_JOURNEY_STAGES[st.session_state.hero_journey_stage]
 
     character_select = f"{game_state.character_name} the {game_state.character_type}"
 
-    # Include previous scenarios and choices in the context
-    context = "\n".join([f"{item[0]}: {item[1]}" for item in st.session_state.conversation_history[-5:]])  # Last 5 interactions
+    context = "\n".join([f"{item[0]}: {item[1]}" for item in st.session_state.conversation_history[-5:]])
 
     prompt = f"""\
     Previous context:
@@ -84,13 +101,15 @@ def generate_scenario():
 
     Generate a young adult scenario for {character_select} who is in the {game_state.get_current_stage()} stage of change, 
     focusing on {game_state.focus_area} with the specific goal of {game_state.specific_goal}. 
-    The scenario should present a situation where the character is facing a decision related to their change process.
-    Remember that the character is {character_select} - always include details that reinforce this character image.
+    The scenario should align with the hero's journey stage: {hero_journey_stage}.
+    Present a situation where the character faces a decision related to their change process and hero's journey.
     
-    Also, provide 3 possible choices for the user, tailored to their current stage of change.
-    1. A choice representing a lack of movement towards the goal
-    2. A neutral choice
-    3. A choice representing a strong choice towards the goal
+    Also, provide 3 possible choices for the user, each representing a different approach to the hero's journey:
+    1. A choice representing hesitation or retreat (but not complete inaction)
+    2. A choice representing a cautious step forward
+    3. A choice representing a bold, heroic action
+
+    Each choice should give the hero a chance to change and progress in their journey.
     
     Format the response as follows:
     Scenario: [Your scenario here]
@@ -123,9 +142,11 @@ def main_view():
     chat_session = st.session_state.chat_session
     character_select = f"{game_state.character_name} the {game_state.character_type}"
     art_style = st.session_state.art_style
+    hero_journey_stage = HERO_JOURNEY_STAGES[st.session_state.hero_journey_stage]
 
-    st.title(f"{character_select}'s Change Journey: {game_state.focus_area}")
-    st.write(f"Current Stage: {game_state.get_current_stage()}")
+    st.title(f"{character_select}'s Hero Journey: {game_state.focus_area}")
+    st.write(f"Current Stage of Change: {game_state.get_current_stage()}")
+    st.write(f"Hero's Journey Stage: {hero_journey_stage}")
     st.write(f"Your Goal: {game_state.specific_goal}")
 
     # Generate and add image if flag is set
@@ -163,20 +184,23 @@ def main_view():
             
     # Choice selection and Make Choice button
     with st.form(key='choice_form'):
-        choices = [choice.split(': ', 1)[-1].strip() for choice in st.session_state.current_choices]
+        choices = st.session_state.current_choices
         choice = st.radio("What will you do?", choices)
         submit_button = st.form_submit_button(label='Make Choice')
 
     if submit_button:
-        change_scores = [-5, 0, 10]
+        change_scores = [5, 10, 15]  # Adjusted to always move forward, but at different rates
         choice_index = choices.index(choice)
         change_score = change_scores[choice_index]
         
         game_state.increment_progress(change_score)
         st.session_state.game_state = game_state  # Update the session state
 
-        # Include more context in the prompt
+        # Progress the hero's journey stage
+        st.session_state.hero_journey_stage = min(st.session_state.hero_journey_stage + 1, len(HERO_JOURNEY_STAGES) - 1)
+
         context = "\n".join([f"{item[0]}: {item[1]}" for item in st.session_state.conversation_history[-5:]])
+        hero_journey_stage = HERO_JOURNEY_STAGES[st.session_state.hero_journey_stage]
 
         prompt = f"""
         Previous context:
@@ -185,20 +209,21 @@ def main_view():
         {character_select} chose: "{choice}" in response to the previous scenario. 
         They are in the {game_state.get_current_stage()} stage of change for {game_state.focus_area}, 
         with the specific goal of {game_state.specific_goal}. 
+        The current hero's journey stage is: {hero_journey_stage}.
 
         Generate a brief (110 words max) response describing the outcome of this choice, 
-        their feelings about it, and what the character noticed. 
-        Remember that the character is {character_select} - always include details that reinforce this character image.
+        their feelings about it, and what the character learned or how they grew.
 
         Then, provide a new scenario and 3 new choices based on this outcome, following the same format as before.
+        Ensure the new scenario and choices align with the current hero's journey stage and the character's goal.
 
         Format the response as follows:
         Outcome: [Your outcome here]
         New Scenario: [Your new scenario here]
         Choices:
-        1. [Choice 1]
-        2. [Choice 2]
-        3. [Choice 3]
+        1. [Choice representing hesitation or retreat]
+        2. [Choice representing a cautious step forward]
+        3. [Choice representing a bold, heroic action]
 
         Keep the entire response under 350 words.
         """
@@ -236,7 +261,8 @@ def main_view():
     st.write("---")  # Add a separator
     progress = game_state.progress / 100
     st.progress(value=progress, text=f"Overall Progress: {game_state.progress}%")
-    st.write(f"Stage: {game_state.get_current_stage()}")
+    st.write(f"Stage of Change: {game_state.get_current_stage()}")
+    st.write(f"Hero's Journey Stage: {hero_journey_stage}")
     st.write(f"Steps taken: {game_state.steps_taken}")
 
     # Add "Print My Story" button when progress reaches 10%
@@ -295,15 +321,4 @@ def main():
     init_state()
 
     if not st.session_state.journey_in_progress:
-        get_journey_prompt_view()
-    else:
-        main_view()
-
-    if st.button("Reset Journey"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        init_state()
-        st.rerun()
-
-if __name__ == "__main__":
-    main()
+        get_journey_
