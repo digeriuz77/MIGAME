@@ -234,7 +234,7 @@ def process_choice_response(response, choice):
         st.session_state.conversation_history.append(("CHOICE", choice))
         st.session_state.conversation_history.append(("OUTCOME", outcome))
         st.session_state.generate_image_next_turn = True
-st.write("Debug: Setting generate_image_next_turn to True")
+        st.write("Debug: Setting generate_image_next_turn to True")
         st.session_state.conversation_history.append(("SCENARIO", new_scenario))
 
         # Process new choices
