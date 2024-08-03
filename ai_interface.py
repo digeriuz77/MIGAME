@@ -1,3 +1,5 @@
+# ai_interface.py
+
 import streamlit as st
 from openai import OpenAI
 import base64
@@ -9,6 +11,7 @@ class AIInterface:
             st.error("OpenAI API key not found. Please set it in your Streamlit secrets.")
             st.stop()
         self.client = OpenAI(api_key=st.secrets["openai_api_key"])
+        self.image_cache = {}
 
     def generate_scenario(self, game_state, is_first_scenario=False):
         character_select = (f"{game_state.character_name} the {game_state.character_type} "
@@ -20,19 +23,18 @@ class AIInterface:
                       f"ordinary world, facing the challenge of {game_state.challenge} "
                       f"with the goal of {game_state.specific_goal}. ")
         else:
-            prompt = (f"Create the next scenario for {character_select} in the "
-                      f"{current_stage} stage, continuing their journey to "
+            prompt = (f"Continue the story for {character_select} in the "
+                      f"{current_stage} stage of their journey to "
                       f"overcome {game_state.challenge} and achieve {game_state.specific_goal}. ")
 
-        prompt += ("Provide a vivid scenario description and 3 possible choices "
-                   "that fit naturally with the story. Format: [Scenario description]"
-                   "\n1. [Choice 1]\n2. [Choice 2]\n3. [Choice 3]")
+        prompt += ("Provide a vivid, engaging scenario description followed by 3 possible choices. "
+                   "Format: [Scenario description]\n1. [Choice 1]\n2. [Choice 2]\n3. [Choice 3]")
 
         try:
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a storytelling expert specializing in the hero's journey narrative structure for children."},
+                    {"role": "system", "content": "You are a master storyteller crafting an engaging hero's journey for children."},
                     {"role": "user", "content": prompt}
                 ]
             )
@@ -48,6 +50,10 @@ class AIInterface:
         return scenario, choices
 
     def generate_image(self, scenario, character_select, art_style):
+        cache_key = f"{scenario[:50]}_{character_select}_{art_style}"
+        if cache_key in self.image_cache:
+            return self.image_cache[cache_key]
+
         prompt = self.create_image_prompt(scenario, character_select, art_style)
         if not prompt:
             st.error("Failed to create image prompt")
@@ -61,22 +67,24 @@ class AIInterface:
                 size="1024x1024",
                 response_format="b64_json"
             )
-            return response.data[0].b64_json
+            image_b64 = response.data[0].b64_json
+            self.image_cache[cache_key] = image_b64
+            return image_b64
         except Exception as e:
             st.error(f"Error in generating image: {str(e)}")
             return None
 
     def create_image_prompt(self, scenario, character_select, art_style):
         prompt = f"""
-        Create a brief, single-paragraph description for an image that captures 
+        Create a vivid, single-paragraph description for an illustration capturing 
         a key moment in this scenario:
         
         {scenario}
         
         The image should feature {character_select}. Focus on the hero's actions, 
-        the setting, and any important objects or characters. The description should be 
+        the setting, and any important elements. The description should be 
         suitable for creating an image in the style of {art_style}.
-        Keep the description under 50 words and make it visually evocative.
+        Keep the description under 50 words and make it visually compelling.
         """
         
         try:
