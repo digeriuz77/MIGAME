@@ -1,3 +1,5 @@
+# game_logic.py
+
 class GameState:
     def __init__(self):
         self.stages = [
@@ -14,7 +16,7 @@ class GameState:
         self.specific_goal = ""
         self.steps_taken = 0
         self.art_style = "Digital painting"
-        self.conversation_history = []
+        self.story_elements = []
 
     def advance_stage(self):
         if self.current_stage < len(self.stages) - 1:
@@ -27,5 +29,5 @@ class GameState:
     def get_progress(self):
         return (self.current_stage / (len(self.stages) - 1)) * 100
 
-    def add_to_history(self, item_type, content):
-        self.conversation_history.append((item_type, content))
+    def add_to_story(self, element_type, content):
+        self.story_elements.append((element_type, content))
