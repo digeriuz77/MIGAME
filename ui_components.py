@@ -9,6 +9,37 @@ from io import BytesIO
 from PIL import Image
 import os
 
+def start_view():
+    st.title("Begin Your Hero's Journey")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        character_name = st.text_input("Your hero's name:")
+        character_type = st.text_input("Type of creature (e.g., dragon, unicorn, elf):")
+    with col2:
+        distinguishing_feature = st.text_input("A unique feature (e.g., glowing eyes, rainbow mane):")
+        art_style = st.selectbox("Choose an art style:", [
+            "Digital painting", "Watercolor", "Oil painting", "Pencil sketch", 
+            "Comic book art", "Pixel art", "3D render", "Storybook illustration"
+        ])
+    
+    challenge_areas = ["Overcoming fear", "Making new friends", "Learning a new skill", "Helping others"]
+    selected_challenge = st.selectbox("What challenge will your hero face?", challenge_areas)
+    specific_goal = st.text_input("What specific goal does your hero have for this challenge?")
+
+    if st.button("Embark on the Journey"):
+        game_state = GameState()
+        game_state.character_name = character_name
+        game_state.character_type = character_type
+        game_state.distinguishing_feature = distinguishing_feature
+        game_state.art_style = art_style
+        game_state.challenge = selected_challenge
+        game_state.specific_goal = specific_goal
+        
+        st.session_state.game_state = game_state
+        st.session_state.journey_in_progress = True
+        st.rerun()
+
 def game_view():
     game_state = st.session_state.game_state
     ai_interface = AIInterface()
@@ -79,6 +110,20 @@ def display_progress(game_state):
                 file_name=f"{game_state.character_name}_hero_journey.pdf",
                 mime="application/pdf"
             )
+
+def end_view():
+    st.title("Journey Complete!")
+    st.write("Congratulations! You've completed your hero's journey.")
+    game_state = st.session_state.game_state
+    display_current_page(game_state)
+    if st.button("Print My Story"):
+        pdf_bytes = print_story(game_state)
+        st.download_button(
+            label="Download Your Hero's Journey Story",
+            data=pdf_bytes,
+            file_name=f"{game_state.character_name}_hero_journey.pdf",
+            mime="application/pdf"
+        )
 
 def print_story(game_state):
     pdf = FPDF()
