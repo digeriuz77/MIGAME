@@ -51,7 +51,10 @@ class AIInterface:
         parts = response.split("\n\n")
         scenario = parts[0].strip()
         choices = [choice.strip() for choice in parts[1].split("\n") if choice.strip()]
-        return scenario, choices
+        # Ensure we always have 3 choices
+        while len(choices) < 3:
+            choices.append(f"{len(choices) + 1}. [Generate another choice]")
+        return scenario, choices[:3]  # Limit to 3 choices
 
     def generate_image(self, scenario, character_select, art_style):
         cache_key = f"{scenario[:50]}_{character_select}_{art_style}"
