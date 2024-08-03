@@ -1,3 +1,5 @@
+# game_logic.py
+
 class GameState:
     def __init__(self):
         self.stages = [
