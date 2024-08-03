@@ -64,17 +64,6 @@ def game_view():
     display_choices(game_state)
     display_progress(game_state)
 
-def display_choices(game_state):
-    if game_state.current_choices:
-        st.subheader("What will our hero do next?")
-        cols = st.columns(3)
-        for i, choice in enumerate(game_state.current_choices):
-            if cols[i].button(choice.split(". ", 1)[1], key=f"choice_{i}"):
-                game_state.add_to_story("CHOICE", choice.split(". ", 1)[1])
-                game_state.advance_stage()
-                st.rerun()
-                
-
 def display_current_page(game_state):
     if not game_state.story_elements:
         return
@@ -82,14 +71,28 @@ def display_current_page(game_state):
     st.markdown("---")
     st.subheader("Current Scene")
 
-    for element_type, content in game_state.story_elements[-3:]:  # Display last 3 elements (scenario, image, choice)
+    for element_type, content in game_state.story_elements[-2:]:  # Display last 2 elements (scenario and image)
         if element_type == "SCENARIO":
             st.write(content)
         elif element_type == "IMAGE":
             st.image(f"data:image/png;base64,{content}")
-        elif element_type == "CHOICE" and not game_state.awaiting_choice:
-            st.write(f"Our hero decided to: {content}")
-            
+
+def display_choices(game_state):
+    st.markdown("---")
+    st.subheader("What will our hero do next?")
+    
+    if game_state.current_choices:
+        cols = st.columns(3)
+        for i, choice in enumerate(game_state.current_choices):
+            choice_text = choice.split(". ", 1)[-1] if ". " in choice else choice
+            if cols[i].button(choice_text, key=f"choice_{i}"):
+                game_state.add_to_story("CHOICE", choice_text)
+                game_state.advance_stage()
+                game_state.awaiting_choice = True
+                st.rerun()
+    else:
+        st.write("Generating choices... Please wait.")
+
 def display_progress(game_state):
     st.markdown("---")
     progress = game_state.get_progress()
