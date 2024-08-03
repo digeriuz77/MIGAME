@@ -23,13 +23,15 @@ class AIInterface:
                       f"ordinary world, facing the challenge of {game_state.challenge} "
                       f"with the goal of {game_state.specific_goal}. ")
         else:
+            last_choice = game_state.story_elements[-1][1] if game_state.story_elements else "No previous choice"
             prompt = (f"Continue the story for {character_select} in the "
                       f"{current_stage} stage of their journey to "
-                      f"overcome {game_state.challenge} and achieve {game_state.specific_goal}. ")
+                      f"overcome {game_state.challenge} and achieve {game_state.specific_goal}. "
+                      f"Their last choice was: {last_choice}")
 
         prompt += ("Provide a vivid, engaging scenario description followed by 3 possible choices. "
-                   "Do not include labels like '[Scenario Description]' or '[Choice 1]'. "
-                   "Format the response as:\n\nScenario description\n\n1. First choice\n2. Second choice\n3. Third choice")
+                   "Do not include labels. Format the response as:\n\n"
+                   "Scenario description\n\n1. First choice\n2. Second choice\n3. Third choice")
 
         try:
             response = self.client.chat.completions.create(
@@ -43,6 +45,7 @@ class AIInterface:
         except Exception as e:
             st.error(f"Error in generating scenario: {str(e)}")
             return None, []
+            
 
     def process_scenario_response(self, response):
         parts = response.split("\n\n")
@@ -55,7 +58,7 @@ class AIInterface:
         if cache_key in self.image_cache:
             return self.image_cache[cache_key]
 
-        prompt = self.create_image_prompt(scenario, character_select, art_style)
+        prompt = f"Create an image of {character_select} in the style of {art_style}. {self.create_image_prompt(scenario, character_select, art_style)}"
         if not prompt:
             st.error("Failed to create image prompt")
             return None
