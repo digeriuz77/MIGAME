@@ -1,7 +1,4 @@
 class GameState:
-    """
-    Manages the state of the hero's journey game.
-    """
     def __init__(self):
         self.stages = [
             "The Ordinary World", "The Call to Adventure", "Refusal of the Call",
@@ -16,17 +13,19 @@ class GameState:
         self.challenge = ""
         self.specific_goal = ""
         self.steps_taken = 0
+        self.art_style = "Digital painting"
+        self.conversation_history = []
 
     def advance_stage(self):
-        """Advance to the next stage of the hero's journey."""
         if self.current_stage < len(self.stages) - 1:
             self.current_stage += 1
             self.steps_taken += 1
 
     def is_journey_complete(self):
-        """Check if the hero's journey is complete."""
         return self.current_stage == len(self.stages) - 1
 
     def get_progress(self):
-        """Calculate the current progress of the journey."""
         return (self.current_stage / (len(self.stages) - 1)) * 100
+
+    def add_to_history(self, item_type, content):
+        self.conversation_history.append((item_type, content))
