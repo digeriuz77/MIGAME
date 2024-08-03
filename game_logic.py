@@ -17,12 +17,14 @@ class GameState:
         self.steps_taken = 0
         self.art_style = "Digital painting"
         self.story_elements = []
-        self.awaiting_choice = False
+        self.awaiting_choice = True
+        self.current_choices = []
 
     def advance_stage(self):
         if self.current_stage < len(self.stages) - 1:
             self.current_stage += 1
             self.steps_taken += 1
+        self.awaiting_choice = True
 
     def is_journey_complete(self):
         return self.current_stage == len(self.stages) - 1
@@ -32,3 +34,6 @@ class GameState:
 
     def add_to_story(self, element_type, content):
         self.story_elements.append((element_type, content))
+
+    def set_choices(self, choices):
+        self.current_choices = choices
