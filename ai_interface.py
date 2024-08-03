@@ -14,6 +14,11 @@ class AIInterface:
         self.image_cache = {}
 
     def generate_scenario(self, game_state, is_first_scenario=False):
+      
+        prompt += ("Provide a vivid, engaging scenario description followed by 3 possible choices. "
+                   "Do not include labels like '[Scenario Description]' or '[Choice 1]'. "
+                   "Format the response as:\n\nScenario description\n\n1. First choice\n2. Second choice\n3. Third choice")
+
         character_select = (f"{game_state.character_name} the {game_state.character_type} "
                             f"with {game_state.distinguishing_feature}")
         current_stage = game_state.stages[game_state.current_stage]
@@ -44,9 +49,9 @@ class AIInterface:
             return None, []
 
     def process_scenario_response(self, response):
-        parts = response.split("\n1.")
+        parts = response.split("\n\n")
         scenario = parts[0].strip()
-        choices = ["1." + choice.strip() for choice in parts[1:]]
+        choices = [choice.strip() for choice in parts[1].split("\n") if choice.strip()]
         return scenario, choices
 
     def generate_image(self, scenario, character_select, art_style):
