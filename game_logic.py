@@ -25,6 +25,7 @@ class GameState:
             self.current_stage += 1
             self.steps_taken += 1
         self.awaiting_choice = True
+        self.current_choices = []  # Clear current choices when advancing
 
     def is_journey_complete(self):
         return self.current_stage == len(self.stages) - 1
