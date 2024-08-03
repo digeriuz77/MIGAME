@@ -35,6 +35,7 @@ def start_view():
         game_state.art_style = art_style
         game_state.challenge = selected_challenge
         game_state.specific_goal = specific_goal
+        game_state.awaiting_choice = True
         
         st.session_state.game_state = game_state
         st.session_state.journey_in_progress = True
@@ -48,24 +49,31 @@ def game_view():
     st.subheader(f"Challenge: {game_state.challenge}")
     st.write(f"Current Stage: {game_state.stages[game_state.current_stage]}")
 
-    if not game_state.story_elements or game_state.awaiting_choice:
-        if not game_state.story_elements:
-            scenario, choices = ai_interface.generate_scenario(game_state, is_first_scenario=True)
-        else:
-            scenario, choices = ai_interface.generate_scenario(game_state)
+    if game_state.awaiting_choice:
+        scenario, choices = ai_interface.generate_scenario(game_state, is_first_scenario=(len(game_state.story_elements) == 0))
         
         if scenario and choices:
             game_state.add_to_story("SCENARIO", scenario)
             image_b64 = ai_interface.generate_image(scenario, f"{game_state.character_name} the {game_state.character_type}", game_state.art_style)
             if image_b64:
                 game_state.add_to_story("IMAGE", image_b64)
-            game_state.add_to_story("CHOICES", choices)
-            game_state.awaiting_choice = True
+            game_state.set_choices(choices)
+            game_state.awaiting_choice = False
 
     display_current_page(game_state)
-    if game_state.awaiting_choice:
-        display_choices(game_state, ai_interface)
+    display_choices(game_state)
     display_progress(game_state)
+
+def display_choices(game_state):
+    if game_state.current_choices:
+        st.subheader("What will our hero do next?")
+        cols = st.columns(3)
+        for i, choice in enumerate(game_state.current_choices):
+            if cols[i].button(choice.split(". ", 1)[1], key=f"choice_{i}"):
+                game_state.add_to_story("CHOICE", choice.split(". ", 1)[1])
+                game_state.advance_stage()
+                st.rerun()
+                
 
 def display_current_page(game_state):
     if not game_state.story_elements:
@@ -81,19 +89,7 @@ def display_current_page(game_state):
             st.image(f"data:image/png;base64,{content}")
         elif element_type == "CHOICE" and not game_state.awaiting_choice:
             st.write(f"Our hero decided to: {content}")
-
-def display_choices(game_state, ai_interface):
-    choices = next((content for element_type, content in reversed(game_state.story_elements) if element_type == "CHOICES"), None)
-    if choices:
-        st.subheader("What will our hero do next?")
-        cols = st.columns(3)
-        for i, choice in enumerate(choices):
-            if cols[i].button(choice.split(". ", 1)[1], key=f"choice_{i}"):
-                game_state.add_to_story("CHOICE", choice.split(". ", 1)[1])
-                game_state.advance_stage()
-                game_state.awaiting_choice = False
-                st.rerun()
-
+            
 def display_progress(game_state):
     st.markdown("---")
     progress = game_state.get_progress()
