@@ -1,7 +1,8 @@
+# streamlit_app.py
 
 import streamlit as st
 from game_logic import GameState
-from ui_components import start_view, game_view, end_view, print_story
+from ui_components import start_view, game_view, end_view
 from utils import init_state, reset_state
 
 def main():
