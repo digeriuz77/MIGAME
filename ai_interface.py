@@ -14,11 +14,6 @@ class AIInterface:
         self.image_cache = {}
 
     def generate_scenario(self, game_state, is_first_scenario=False):
-      
-        prompt += ("Provide a vivid, engaging scenario description followed by 3 possible choices. "
-                   "Do not include labels like '[Scenario Description]' or '[Choice 1]'. "
-                   "Format the response as:\n\nScenario description\n\n1. First choice\n2. Second choice\n3. Third choice")
-
         character_select = (f"{game_state.character_name} the {game_state.character_type} "
                             f"with {game_state.distinguishing_feature}")
         current_stage = game_state.stages[game_state.current_stage]
@@ -33,7 +28,8 @@ class AIInterface:
                       f"overcome {game_state.challenge} and achieve {game_state.specific_goal}. ")
 
         prompt += ("Provide a vivid, engaging scenario description followed by 3 possible choices. "
-                   "Format: [Scenario description]\n1. [Choice 1]\n2. [Choice 2]\n3. [Choice 3]")
+                   "Do not include labels like '[Scenario Description]' or '[Choice 1]'. "
+                   "Format the response as:\n\nScenario description\n\n1. First choice\n2. Second choice\n3. Third choice")
 
         try:
             response = self.client.chat.completions.create(
