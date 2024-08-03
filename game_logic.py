@@ -1,5 +1,3 @@
-# game_logic.py
-
 class GameState:
     def __init__(self):
         self.stages = [
@@ -17,6 +15,7 @@ class GameState:
         self.steps_taken = 0
         self.art_style = "Digital painting"
         self.story_elements = []
+        self.awaiting_choice = False
 
     def advance_stage(self):
         if self.current_stage < len(self.stages) - 1:
