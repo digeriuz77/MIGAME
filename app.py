@@ -507,7 +507,7 @@ def download_story():
         st.download_button("Download PDF", data=pdf_output, file_name=f"{title}.pdf", mime="application/pdf")
 
 # Main application flow
-if not game_state['character_name']:
+if not st.session_state['game_state']['character_name']:
     start_view()
 else:
     adventure_view()
