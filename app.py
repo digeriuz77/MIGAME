@@ -8,7 +8,7 @@ from fpdf import FPDF
 import time
 
 # Set your OpenAI API key
-openai.api_key = st.secrets.get("OPENAI_API_KEY", None)
+openai.api_key = st.secrets.get("openai_api_key", None)
 if not openai.api_key:
     st.error("Please set your OpenAI API key in Streamlit secrets.")
     st.stop()
@@ -56,7 +56,7 @@ def generate_scenario(game_state, is_first_scenario=False):
         prompt += "\n3. Third choice"
 
     try:
-        response = openai.chat_completion_create(
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a master storyteller crafting an engaging hero's journey for children."},
@@ -72,14 +72,16 @@ def generate_scenario(game_state, is_first_scenario=False):
 def process_scenario_response(response, num_choices=3):
     parts = response.strip().split("\n\n")
     scenario = parts[0].strip()
-    choices = [choice.strip() for choice in parts[1].split("\n") if choice.strip()]
-    choices = choices[:num_choices]
+    choices = []
+    if len(parts) > 1:
+        choices = [choice.strip() for choice in parts[1].split("\n") if choice.strip()]
+        choices = choices[:num_choices]
     return scenario, choices
 
 def generate_image(scenario, character_select, art_style):
     prompt = f"An illustration of {character_select} in the following scene: {scenario}. Art style: {art_style}."
     try:
-        response = openai.image_create(
+        response = openai.Image.create(
             prompt=prompt,
             n=1,
             size="512x512",
@@ -145,6 +147,9 @@ def start_view():
     specific_goal = st.text_input("Specific Goal (e.g., to fly over the mountains)", value=game_state['specific_goal'])
 
     if st.button("✨ Start Adventure ✨"):
+        if not character_name or not character_type or not challenge or not specific_goal:
+            st.warning("Please fill in all the required fields.")
+            return
         game_state['character_name'] = character_name
         game_state['character_type'] = character_type
         game_state['distinguishing_feature'] = distinguishing_feature
@@ -200,12 +205,18 @@ def display_choices():
     st.markdown("---")
     st.subheader("🌟 What happens next?")
     choices = game_state['current_choices']
-    for i, choice in enumerate(choices):
-        if st.button(choice, key=f"choice_{i}"):
-            game_state['story_elements'].append(('CHOICE', choice))
-            game_state['current_stage'] = min(game_state['current_stage'] + 1, len(game_state['stages']) - 1)
-            game_state['awaiting_choice'] = True
-            st.session_state['game_state'] = game_state
+    if choices:
+        for i, choice in enumerate(choices):
+            if st.button(choice, key=f"choice_{i}"):
+                game_state['story_elements'].append(('CHOICE', choice))
+                game_state['current_stage'] = min(game_state['current_stage'] + 1, len(game_state['stages']) - 1)
+                game_state['awaiting_choice'] = True
+                st.session_state['game_state'] = game_state
+                st.rerun()
+    else:
+        st.error("No choices available. Please restart the story.")
+        if st.button("🔄 Restart Story"):
+            st.session_state['game_state'] = None
             st.rerun()
 
 def download_story():
