@@ -8,7 +8,7 @@ from fpdf import FPDF
 import time
 
 # Set your OpenAI API key
-openai.api_key = st.secrets.get("openai_api_key")
+openai.api_key = st.secrets.get("OPENAI_API_KEY")
 if not openai.api_key:
     st.error("Please set your OpenAI API key in Streamlit secrets.")
     st.stop()
