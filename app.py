@@ -255,15 +255,12 @@ def process_scenario_response(response, num_choices=3):
 
 @st.cache_data(ttl=3600)
 def generate_image(scenario, character_select, art_style):
-    """Generate an image with caching"""
+    """Generate an image with shorter, focused prompt"""
     prompt = (
-        f"{character_select} in scene: {scenario}. "
-        f"Art style: {art_style}. "
-        "Full body shot, maintaining consistent character appearance. "
-        f"Character must maintain consistent features across all images: {character_select}. "
-        "Same facial features, same body type, same clothing style. "
-        "Ensure lighting and composition are consistent with previous images. "
-        "Child-friendly illustration."
+        f"A child-friendly illustration in {art_style} style: "
+        f"{character_select}, shown in full body view, "
+        f"in scene: {scenario}. "
+        f"Maintain consistent character appearance throughout the story."
     )
 
     try:
@@ -276,7 +273,7 @@ def generate_image(scenario, character_select, art_style):
         )
         
         st.session_state.token_usage['image_generations'] += 1
-        st.session_state.token_usage['total_cost'] += 0.04  # Adjust cost as needed
+        st.session_state.token_usage['total_cost'] += 0.04
         
         return response.data[0].b64_json
     except Exception as e:
@@ -380,86 +377,109 @@ def start_view():
                 'awaiting_choice': True
             })
             st.rerun()
+            
 def adventure_view():
-    game_state = st.session_state.game_state  # Get reference to game state
+    """Main adventure view with proper story progression"""
+    game_state = st.session_state['game_state']
     
     st.title(f"✨ {game_state['title']} ✨")
     st.write(f"**Current Stage:** {game_state['stages'][game_state['current_stage']]}")
     st.write(f"**Your Goal:** {game_state['specific_goal']}")
 
+    # Generate new scenario and choices only when needed
     if game_state['awaiting_choice']:
-        scenario, choices = generate_scenario(game_state, is_first_scenario=(len(game_state['story_elements']) == 0))
+        scenario, choices = generate_scenario(
+            game_state,
+            is_first_scenario=(len(game_state['story_elements']) == 0)
+        )
+        
         if scenario and choices:
+            # Add new scenario
             game_state['story_elements'].append(('SCENARIO', scenario))
-            image_b64 = generate_image(scenario, f"{game_state['character_name']} the {game_state['character_type']}", game_state['art_style'])
+            
+            # Generate and add image
+            image_b64 = generate_image(
+                scenario,
+                f"{game_state['character_name']} the {game_state['character_type']}",
+                game_state['art_style']
+            )
             if image_b64:
                 game_state['story_elements'].append(('IMAGE', image_b64))
+            
+            # Set up choices for user
             game_state['current_choices'] = choices
             game_state['awaiting_choice'] = False
-            st.session_state.game_state = game_state  # Update session state
-        else:
-            st.error("Failed to generate scenario or choices.")
-            return
+            st.session_state['game_state'] = game_state
+            st.rerun()
 
-    # Generate cover image if not already generated
-    if not game_state.get('cover_generated', False):
-        cover_image_b64 = generate_image(
-            f"A cover image for the story titled '{game_state['title']}' featuring {game_state['character_name']} the {game_state['character_type']}",
-            f"{game_state['character_name']} the {game_state['character_type']}",
-            game_state['art_style']
-        )
-        if cover_image_b64:
-            game_state['cover_image'] = cover_image_b64
-            game_state['cover_generated'] = True
-            st.session_state.game_state = game_state  # Update session state
-
+    # Display current story and choices
     display_story()
     display_choices()
 
+    # Check for story completion
     if game_state['current_stage'] == len(game_state['stages']) - 1:
         st.success("🎉 Congratulations! You've completed your adventure.")
         download_story()
 
 
 def display_story():
-    game_state = st.session_state.game_state  # Get reference to game state
+    """Display story elements without overwriting"""
+    game_state = st.session_state['game_state']
     
     st.markdown("---")
     st.subheader("📖 Story So Far")
 
-    # Create a placeholder for the story
-    story_placeholder = st.empty()
-
-    # Display the story elements with a delay
+    # Display all story elements in sequence
     for element_type, content in game_state['story_elements']:
         if element_type == 'SCENARIO':
-            display_scenario_text(content, placeholder=story_placeholder)
-            time.sleep(1)  # Simulate page turning
+            st.markdown(f"""
+                <div class="story-text">
+                    <span class="magical-text">{content}</span>
+                </div>
+            """, unsafe_allow_html=True)
         elif element_type == 'IMAGE':
-            display_image_with_magical_loading(content)  # Updated to use magical loading
+            st.markdown(f"""
+                <div style="text-align: center;">
+                    <img src="data:image/png;base64,{content}"
+                         class="magical-image"
+                         style="max-width: 100%; height: auto;">
+                </div>
+            """, unsafe_allow_html=True)
         elif element_type == 'CHOICE':
-            st.write(f"**Decision:** {content}")
-            time.sleep(0.5)
+            st.markdown(f"""
+                <div class="story-text">
+                    <em>You chose:</em> {content}
+                </div>
+            """, unsafe_allow_html=True)
 
 def display_choices():
-    game_state = st.session_state.game_state  # Get reference to game state
+    """Display interactive choices with proper styling"""
+    game_state = st.session_state['game_state']
     
-    st.markdown("---")
-    st.subheader("🌟 What happens next?")
-    choices = game_state['current_choices']
-    if choices:
-        for i, choice in enumerate(choices):
-            if st.button(choice, key=f"choice_{i}"):
-                game_state['story_elements'].append(('CHOICE', choice))
-                game_state['current_stage'] = min(game_state['current_stage'] + 1, len(game_state['stages']) - 1)
-                game_state['awaiting_choice'] = True
-                st.session_state.game_state = game_state  # Update session state
-                st.rerun()
-    else:
-        st.error("No choices available. Please restart the story.")
-        if st.button("🔄 Restart Story"):
-            st.session_state.game_state = None
-            st.rerun()
+    if game_state['current_choices']:
+        st.markdown("---")
+        st.markdown("<h3 class='magical-text'>🌟 What happens next?</h3>", unsafe_allow_html=True)
+        
+        # Create columns for better choice layout
+        cols = st.columns(len(game_state['current_choices']))
+        
+        for i, (choice, col) in enumerate(zip(game_state['current_choices'], cols)):
+            with col:
+                if st.button(
+                    choice,
+                    key=f"choice_{i}",
+                    use_container_width=True,
+                ):
+                    # Update game state with the chosen path
+                    game_state['story_elements'].append(('CHOICE', choice))
+                    game_state['current_stage'] = min(
+                        game_state['current_stage'] + 1,
+                        len(game_state['stages']) - 1
+                    )
+                    game_state['awaiting_choice'] = True
+                    game_state['current_choices'] = []  # Clear current choices
+                    st.session_state['game_state'] = game_state
+                    st.rerun()
 
 def download_story():
     game_state = st.session_state.game_state  # Get reference to game state
