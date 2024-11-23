@@ -152,7 +152,7 @@ def start_view():
         game_state['age'] = age
         game_state['awaiting_choice'] = True
         st.session_state['game_state'] = game_state
-        st.experimental_rerun()
+        st.rerun()
 
 def adventure_view():
     st.title(f"✨ {game_state['character_name']}'s Magical Adventure ✨")
@@ -204,7 +204,7 @@ def display_choices():
             game_state['current_stage'] = min(game_state['current_stage'] + 1, len(game_state['stages']) - 1)
             game_state['awaiting_choice'] = True
             st.session_state['game_state'] = game_state
-            st.experimental_rerun()
+            st.rerun()
 
 def download_story():
     if st.button("📥 Download Your Story as PDF"):
