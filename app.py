@@ -386,3 +386,120 @@ def start_view():
             st.rerun()
 
 def adventure_view():
+    st.title(f"✨ {game_state['title']} ✨")
+    st.write(f"**Current Stage:** {game_state['stages'][game_state['current_stage']]}")
+    st.write(f"**Your Goal:** {game_state['specific_goal']}")
+
+    if game_state['awaiting_choice']:
+        scenario, choices = generate_scenario(game_state, is_first_scenario=(len(game_state['story_elements']) == 0))
+        if scenario and choices:
+            game_state['story_elements'].append(('SCENARIO', scenario))
+            image_b64 = generate_image(scenario, f"{game_state['character_name']} the {game_state['character_type']}", game_state['art_style'])
+            if image_b64:
+                game_state['story_elements'].append(('IMAGE', image_b64))
+            game_state['current_choices'] = choices
+            game_state['awaiting_choice'] = False
+            st.session_state['game_state'] = game_state
+        else:
+            st.error("Failed to generate scenario or choices.")
+            return
+
+    # Generate cover image if not already generated
+    if not game_state.get('cover_generated', False):
+        cover_image_b64 = generate_image(
+            f"A cover image for the story titled '{game_state['title']}' featuring {game_state['character_name']} the {game_state['character_type']}",
+            f"{game_state['character_name']} the {game_state['character_type']}",
+            game_state['art_style']
+        )
+        if cover_image_b64:
+            game_state['cover_image'] = cover_image_b64
+            game_state['cover_generated'] = True
+            st.session_state['game_state'] = game_state
+
+    display_story()
+    display_choices()
+
+    if game_state['current_stage'] == len(game_state['stages']) - 1:
+        st.success("🎉 Congratulations! You've completed your adventure.")
+        download_story()
+
+def display_story():
+    st.markdown("---")
+    st.subheader("📖 Story So Far")
+
+    # Create a placeholder for the story
+    story_placeholder = st.empty()
+
+    # Display the story elements with a delay
+    for element_type, content in game_state['story_elements']:
+        if element_type == 'SCENARIO':
+            display_scenario_text(content, placeholder=story_placeholder)
+            time.sleep(1)  # Simulate page turning
+        elif element_type == 'IMAGE':
+            display_image_with_effect(content)
+        elif element_type == 'CHOICE':
+            st.write(f"**Decision:** {content}")
+            time.sleep(0.5)
+
+def display_choices():
+    st.markdown("---")
+    st.subheader("🌟 What happens next?")
+    choices = game_state['current_choices']
+    if choices:
+        for i, choice in enumerate(choices):
+            if st.button(choice, key=f"choice_{i}"):
+                game_state['story_elements'].append(('CHOICE', choice))
+                game_state['current_stage'] = min(game_state['current_stage'] + 1, len(game_state['stages']) - 1)
+                game_state['awaiting_choice'] = True
+                st.session_state['game_state'] = game_state
+                st.rerun()
+    else:
+        st.error("No choices available. Please restart the story.")
+        if st.button("🔄 Restart Story"):
+            st.session_state['game_state'] = None
+            st.rerun()
+
+def download_story():
+    if st.button("📥 Download Your Story as PDF"):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 24)
+
+        # Add cover page with title and image
+        title = game_state.get('title', f"{game_state['character_name']}'s Adventure")
+        pdf.multi_cell(0, 20, title, align='C')
+
+        if 'cover_image' in game_state:
+            image_data = base64.b64decode(game_state['cover_image'])
+            image = Image.open(BytesIO(image_data))
+            image_path = f"cover_image_{os.getpid()}.png"
+            image.save(image_path)
+            pdf.image(image_path, x=10, w=190)
+            os.remove(image_path)
+
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+
+        for element_type, content in game_state['story_elements']:
+            if element_type == 'SCENARIO':
+                pdf.multi_cell(0, 10, content)
+            elif element_type == 'CHOICE':
+                pdf.multi_cell(0, 10, f"Decision: {content}")
+            elif element_type == 'IMAGE':
+                image_data = base64.b64decode(content)
+                image = Image.open(BytesIO(image_data))
+                image_path = f"temp_image_{os.getpid()}.png"
+                image.save(image_path)
+                pdf.image(image_path, x=10, w=190)
+                os.remove(image_path)
+
+        pdf_output = BytesIO()
+        pdf.output(pdf_output)
+        pdf_output.seek(0)
+        st.download_button("Download PDF", data=pdf_output, file_name=f"{title}.pdf", mime="application/pdf")
+
+# Main application flow
+if not game_state['character_name']:
+    start_view()
+else:
+    adventure_view()
