@@ -5,7 +5,6 @@ Pillow
 fpdf
 
 # Optional enhancements
-streamlit-custom-notification  # For magical notifications
 streamlit-particles  # For particle effects
 streamlit-lottie  # For more complex animations
 streamlit-images-carousel  # For image transitions
