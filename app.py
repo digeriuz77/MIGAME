@@ -255,10 +255,7 @@ def process_scenario_response(response, num_choices=3):
 
 @st.cache_data(ttl=3600)
 def generate_image(scenario, character_select, art_style):
-    """Generate an image with caching and seed consistency"""
-    if 'image_seed' not in st.session_state:
-        st.session_state.image_seed = hash(character_select) % 4294967295
-
+    """Generate an image with caching"""
     prompt = (
         f"{character_select} in scene: {scenario}. "
         f"Art style: {art_style}. "
@@ -275,8 +272,7 @@ def generate_image(scenario, character_select, art_style):
             n=1,
             size="1024x1024",
             quality="standard",
-            response_format="b64_json",
-            seed=st.session_state.image_seed
+            response_format="b64_json"
         )
         
         st.session_state.token_usage['image_generations'] += 1
