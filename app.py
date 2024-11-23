@@ -8,7 +8,7 @@ from fpdf import FPDF
 import time
 
 # Set your OpenAI API key
-openai.api_key = st.secrets.get("OPENAI_API_KEY", None)
+openai.api_key = st.secrets.get("openai_api_key")
 if not openai.api_key:
     st.error("Please set your OpenAI API key in Streamlit secrets.")
     st.stop()
@@ -19,20 +19,29 @@ def generate_scenario(game_state, is_first_scenario=False):
     current_stage = game_state['stages'][game_state['current_stage']]
     age = game_state['age']
 
+    # Compile the story so far
+    story_so_far = ""
+    for element_type, content in game_state['story_elements']:
+        if element_type == 'SCENARIO':
+            story_so_far += f"{content}\n"
+        elif element_type == 'CHOICE':
+            story_so_far += f"Choice made: {content}\n"
+
     if is_first_scenario:
         prompt = (
             f"Create an opening scenario for {character_select} in their "
             f"ordinary world, facing the challenge of {game_state['challenge']} "
-            f"with the goal of {game_state['specific_goal']}. "
+            f"with the goal of {game_state['specific_goal']}.\n"
         )
     else:
-        last_choice = game_state['story_elements'][-1][1] if game_state['story_elements'] else "No previous choice"
         prompt = (
             f"Continue the story for {character_select} in the "
             f"{current_stage} stage of their journey to "
-            f"overcome {game_state['challenge']} and achieve {game_state['specific_goal']}. "
-            f"Their last choice was: {last_choice}. "
+            f"overcome {game_state['challenge']} and achieve {game_state['specific_goal']}.\n"
         )
+
+    # Include the story so far
+    prompt += f"The story so far:\n{story_so_far}\n"
 
     # Adjust complexity based on age
     if age <= 7:
@@ -45,10 +54,10 @@ def generate_scenario(game_state, is_first_scenario=False):
         complexity = "Use language appropriate for an 11-14 year old."
         num_choices = 3
 
-    # Include complexity instructions in the prompt
-    prompt += f"\n\n{complexity}"
+    prompt += f"\n{complexity}"
     prompt += (
-        "\n\nProvide a vivid, engaging scenario description followed by choices. "
+        "\nProvide a vivid, engaging scenario description that continues the story, "
+        "followed by choices that the character can make. "
         "Do not include labels. Format the response as:\n\n"
         "Scenario description\n\n1. First choice\n2. Second choice"
     )
@@ -79,7 +88,18 @@ def process_scenario_response(response, num_choices=3):
     return scenario, choices
 
 def generate_image(scenario, character_select, art_style):
-    prompt = f"An illustration of {character_select} in the following scene: {scenario}. Art style: {art_style}."
+    # Include detailed character description
+    character_description = (
+        f"{game_state['character_name']} is a {game_state['character_type']} with {game_state['distinguishing_feature']}."
+    )
+
+    prompt = (
+        f"An illustration of {character_description} "
+        f"In the following scene: {scenario}. "
+        f"Art style: {art_style}. "
+        f"Ensure that {game_state['character_name']} appears consistent with previous images."
+    )
+
     try:
         response = openai.Image.create(
             prompt=prompt,
@@ -93,8 +113,9 @@ def generate_image(scenario, character_select, art_style):
         st.error(f"Error in generating image: {str(e)}")
         return None
 
-def display_scenario_text(scenario):
-    placeholder = st.empty()
+def display_scenario_text(scenario, placeholder=None):
+    if not placeholder:
+        placeholder = st.empty()
     words = scenario.split()
     full_text = ""
     for word in words:
@@ -129,7 +150,9 @@ if 'game_state' not in st.session_state:
         'awaiting_choice': True,
         'current_choices': [],
         'age': 10,
-        'title': ""
+        'title': "",
+        'cover_generated': False,
+        'cover_image': ""
     }
 
 game_state = st.session_state['game_state']
@@ -137,7 +160,8 @@ game_state = st.session_state['game_state']
 # Start of the app
 def start_view():
     st.title("📖 Create Your Own Adventure Book")
-    st.subheader("Enter your hero's details:")
+    st.subheader("Enter your story details:")
+    title = st.text_input("Story Title", value=game_state.get('title', ''))
     character_name = st.text_input("Hero's Name", value=game_state['character_name'])
     character_type = st.text_input("Hero's Type (e.g., dragon, unicorn)", value=game_state['character_type'])
     distinguishing_feature = st.text_input("Distinguishing Feature (e.g., golden scales)", value=game_state['distinguishing_feature'])
@@ -147,9 +171,10 @@ def start_view():
     specific_goal = st.text_input("Specific Goal (e.g., to fly over the mountains)", value=game_state['specific_goal'])
 
     if st.button("✨ Start Adventure ✨"):
-        if not character_name or not character_type or not challenge or not specific_goal:
+        if not character_name or not character_type or not challenge or not specific_goal or not title:
             st.warning("Please fill in all the required fields.")
             return
+        game_state['title'] = title
         game_state['character_name'] = character_name
         game_state['character_type'] = character_type
         game_state['distinguishing_feature'] = distinguishing_feature
@@ -162,7 +187,7 @@ def start_view():
         st.rerun()
 
 def adventure_view():
-    st.title(f"✨ {game_state['character_name']}'s Magical Adventure ✨")
+    st.title(f"✨ {game_state['title']} ✨")
     st.write(f"**Current Stage:** {game_state['stages'][game_state['current_stage']]}")
     st.write(f"**Your Goal:** {game_state['specific_goal']}")
 
@@ -180,26 +205,42 @@ def adventure_view():
             st.error("Failed to generate scenario or choices.")
             return
 
+    # Generate cover image if not already generated
+    if not game_state.get('cover_generated', False):
+        cover_image_b64 = generate_image(
+            f"A cover image for the story titled '{game_state['title']}' featuring {game_state['character_name']} the {game_state['character_type']}",
+            f"{game_state['character_name']} the {game_state['character_type']}",
+            game_state['art_style']
+        )
+        if cover_image_b64:
+            game_state['cover_image'] = cover_image_b64
+            game_state['cover_generated'] = True
+            st.session_state['game_state'] = game_state
+
     display_story()
     display_choices()
 
     if game_state['current_stage'] == len(game_state['stages']) - 1:
         st.success("🎉 Congratulations! You've completed your adventure.")
-        title = st.text_input("Choose a title for your story:", value=f"{game_state['character_name']}'s Adventure")
-        game_state['title'] = title
-        st.session_state['game_state'] = game_state
         download_story()
 
 def display_story():
     st.markdown("---")
     st.subheader("📖 Story So Far")
+
+    # Create a placeholder for the story
+    story_placeholder = st.empty()
+
+    # Display the story elements with a delay
     for element_type, content in game_state['story_elements']:
         if element_type == 'SCENARIO':
-            display_scenario_text(content)
+            display_scenario_text(content, placeholder=story_placeholder)
+            time.sleep(1)  # Simulate page turning
         elif element_type == 'IMAGE':
             display_image_with_effect(content)
         elif element_type == 'CHOICE':
             st.write(f"**Decision:** {content}")
+            time.sleep(0.5)
 
 def display_choices():
     st.markdown("---")
@@ -225,19 +266,12 @@ def download_story():
         pdf.add_page()
         pdf.set_font("Arial", 'B', 24)
 
-        # Add cover page with title and an image
+        # Add cover page with title and image
         title = game_state.get('title', f"{game_state['character_name']}'s Adventure")
         pdf.multi_cell(0, 20, title, align='C')
 
-        # Optionally, include a cover image
-        cover_image_b64 = generate_image(
-            f"A cover image for the story titled '{title}' featuring {game_state['character_name']} the {game_state['character_type']}",
-            f"{game_state['character_name']} the {game_state['character_type']}",
-            game_state['art_style']
-        )
-
-        if cover_image_b64:
-            image_data = base64.b64decode(cover_image_b64)
+        if 'cover_image' in game_state:
+            image_data = base64.b64decode(game_state['cover_image'])
             image = Image.open(BytesIO(image_data))
             image_path = f"cover_image_{os.getpid()}.png"
             image.save(image_path)
