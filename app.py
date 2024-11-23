@@ -27,7 +27,7 @@ if 'token_usage' not in st.session_state:
 
 # Initialize game state if not exists
 if 'game_state' not in st.session_state:
-    st.session_state.game_state = {
+    st.session_state['game_state'] = {
         'stages': [
             "The Ordinary World", "The Call to Adventure", "Refusal of the Call",
             "Meeting the Mentor", "Crossing the Threshold", "Tests, Allies, and Enemies",
@@ -384,8 +384,9 @@ def start_view():
                 'awaiting_choice': True
             })
             st.rerun()
-
 def adventure_view():
+    game_state = st.session_state.game_state  # Get reference to game state
+    
     st.title(f"✨ {game_state['title']} ✨")
     st.write(f"**Current Stage:** {game_state['stages'][game_state['current_stage']]}")
     st.write(f"**Your Goal:** {game_state['specific_goal']}")
@@ -399,7 +400,7 @@ def adventure_view():
                 game_state['story_elements'].append(('IMAGE', image_b64))
             game_state['current_choices'] = choices
             game_state['awaiting_choice'] = False
-            st.session_state['game_state'] = game_state
+            st.session_state.game_state = game_state  # Update session state
         else:
             st.error("Failed to generate scenario or choices.")
             return
@@ -414,7 +415,7 @@ def adventure_view():
         if cover_image_b64:
             game_state['cover_image'] = cover_image_b64
             game_state['cover_generated'] = True
-            st.session_state['game_state'] = game_state
+            st.session_state.game_state = game_state  # Update session state
 
     display_story()
     display_choices()
@@ -423,7 +424,10 @@ def adventure_view():
         st.success("🎉 Congratulations! You've completed your adventure.")
         download_story()
 
+
 def display_story():
+    game_state = st.session_state.game_state  # Get reference to game state
+    
     st.markdown("---")
     st.subheader("📖 Story So Far")
 
@@ -436,12 +440,14 @@ def display_story():
             display_scenario_text(content, placeholder=story_placeholder)
             time.sleep(1)  # Simulate page turning
         elif element_type == 'IMAGE':
-            display_image_with_effect(content)
+            display_image_with_magical_loading(content)  # Updated to use magical loading
         elif element_type == 'CHOICE':
             st.write(f"**Decision:** {content}")
             time.sleep(0.5)
 
 def display_choices():
+    game_state = st.session_state.game_state  # Get reference to game state
+    
     st.markdown("---")
     st.subheader("🌟 What happens next?")
     choices = game_state['current_choices']
@@ -451,15 +457,17 @@ def display_choices():
                 game_state['story_elements'].append(('CHOICE', choice))
                 game_state['current_stage'] = min(game_state['current_stage'] + 1, len(game_state['stages']) - 1)
                 game_state['awaiting_choice'] = True
-                st.session_state['game_state'] = game_state
+                st.session_state.game_state = game_state  # Update session state
                 st.rerun()
     else:
         st.error("No choices available. Please restart the story.")
         if st.button("🔄 Restart Story"):
-            st.session_state['game_state'] = None
+            st.session_state.game_state = None
             st.rerun()
 
 def download_story():
+    game_state = st.session_state.game_state  # Get reference to game state
+    
     if st.button("📥 Download Your Story as PDF"):
         pdf = FPDF()
         pdf.add_page()
