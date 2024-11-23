@@ -1,5 +1,3 @@
-# streamlit_app.py
-
 import streamlit as st
 from PIL import Image
 from io import BytesIO
@@ -10,7 +8,10 @@ from fpdf import FPDF
 import time
 
 # Set your OpenAI API key
-openai.api_key = st.secrets.get("openai_api_key", "your-api-key")
+openai.api_key = st.secrets.get("openai_api_key", None)
+if not openai.api_key:
+    st.error("Please set your OpenAI API key in Streamlit secrets.")
+    st.stop()
 
 # Helper functions for AI interactions
 def generate_scenario(game_state, is_first_scenario=False):
@@ -55,14 +56,15 @@ def generate_scenario(game_state, is_first_scenario=False):
         prompt += "\n3. Third choice"
 
     try:
-        response = openai.ChatCompletion.create(
+        response = openai.chat_completion_create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a master storyteller crafting an engaging hero's journey for children."},
                 {"role": "user", "content": prompt}
             ]
         )
-        return process_scenario_response(response.choices[0].message.content, num_choices)
+        content = response['choices'][0]['message']['content']
+        return process_scenario_response(content, num_choices)
     except Exception as e:
         st.error(f"Error in generating scenario: {str(e)}")
         return None, []
@@ -77,7 +79,7 @@ def process_scenario_response(response, num_choices=3):
 def generate_image(scenario, character_select, art_style):
     prompt = f"An illustration of {character_select} in the following scene: {scenario}. Art style: {art_style}."
     try:
-        response = openai.Image.create(
+        response = openai.image_create(
             prompt=prompt,
             n=1,
             size="512x512",
